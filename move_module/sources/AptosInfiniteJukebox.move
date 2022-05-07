@@ -4,6 +4,9 @@ module AptosInfiniteJukebox::Jukebox {
     use Std::Signer;
     use Std::Table;
 
+    /// There is no jukebox present yet.
+    const ENO_JUKEBOX: u64 = 0;
+
     /// I wonder if instead each vote should be stored on that account,
     /// I believe maintaining a map of address to struct is an antipatttern
     /// in Aptos. If so, we would need this module to be granted permission
@@ -42,9 +45,6 @@ module AptosInfiniteJukebox::Jukebox {
         song: Song,
     }
 
-    /// There is no message present
-    const ENO_MESSAGE: u64 = 0;
-
     /// Initialize infinite jukebox.
     public(script) fun initialize_infinite_jukebox(account: &signer) {
         let jukebox = Jukebox {
@@ -55,12 +55,12 @@ module AptosInfiniteJukebox::Jukebox {
         move_to(account, jukebox);
     }
 
-    /*
-    public fun get_current_song(addr: address): ASCII::String acquires MessageHolder {
-        assert!(exists<MessageHolder>(addr), Errors::not_published(ENO_MESSAGE));
-        *&borrow_global<MessageHolder>(addr).message
+    public fun get_current_song(addr: address): ASCII::String acquires Jukebox {
+        assert!(exists<Jukebox>(addr), Errors::not_published(ENO_JUKEBOX));
+        *&borrow_global<Jukebox>(addr).current_song.song
     }
 
+    /*
     public(script) fun submit_vote(account: signer, message_bytes: vector<u8>)
     acquires MessageHolder {
         let message = ASCII::string(message_bytes);
