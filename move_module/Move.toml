@@ -1,0 +1,10 @@
+[package]
+name = "AptosInfiniteJukebox"
+version = "0.0.1"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir="aptos-move/framework", rev = "c53fd8a37152995ec461211f4b6b86d0360eaa6a", branch = "hackathon" }
+
+[addresses]
+Std = "0x1"
+AptosInfiniteJukebox = "_"
