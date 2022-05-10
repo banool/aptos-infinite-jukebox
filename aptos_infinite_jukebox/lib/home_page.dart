@@ -20,6 +20,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool awaitingReturnFromConnectionAttempt = false;
 
+  bool tunedIn = false;
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         connectErrorString = "$e";
         awaitingReturnFromConnectionAttempt = false;
+        tunedIn = false;
       });
     }
   }
@@ -75,6 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         connectErrorString = "$e";
         awaitingReturnFromConnectionAttempt = false;
+        tunedIn = false;
       });
     }
   }
@@ -98,6 +102,13 @@ class _MyHomePageState extends State<MyHomePage> {
       TextButton(
           child: Text("Connect to Spotify"), onPressed: getNewAccessToken)
     ]);
+  }
+
+  Future<void> tuneIn() async {
+    await SpotifySdk.play(spotifyUri: "spotify:track:0H8XeaJunhvpBdBFIYi6Sh");
+    setState(() {
+      tunedIn = true;
+    });
   }
 
   Widget buildWithScaffold(Widget body) {
@@ -138,7 +149,14 @@ class _MyHomePageState extends State<MyHomePage> {
             // wrong elsewhere but we didn't wipe the access token.
             return buildWithScaffold(getNoAccessTokenScreen());
           } else {
-            return PlayerPage();
+            if (!tunedIn) {
+              return buildWithScaffold(TextButton(
+                onPressed: tuneIn,
+                child: Text("Tune in"),
+              ));
+            } else {
+              return PlayerPage();
+            }
           }
         });
 
