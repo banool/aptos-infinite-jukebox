@@ -6,5 +6,5 @@ version = "0.0.1"
 AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "main" }
 
 [addresses]
-AptosInfiniteJukebox = "0x1139fcb72f8b24badfd20f796825e7a1d7199192ea9e1a9fce43afad40455004"
+AptosInfiniteJukebox = "c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd"
 

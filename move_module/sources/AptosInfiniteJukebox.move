@@ -1,11 +1,12 @@
-module AptosInfiniteJukebox::Jukebox {
+module AptosInfiniteJukebox::JukeboxV5 {
     use Std::ASCII;
     use Std::Errors;
-    use Std::Signer;
     use Std::Table;
 
+    //use Std::Signer;
+
     /// There is no jukebox present yet.
-    const ENO_JUKEBOX: u64 = 0;
+    const E_NO_JUKEBOX: u64 = 0;
 
     /// I wonder if instead each vote should be stored on that account,
     /// I believe maintaining a map of address to struct is an antipatttern
@@ -25,7 +26,7 @@ module AptosInfiniteJukebox::Jukebox {
     /// can derive when they should be up to in the song by looking at when
     /// the transaction was executed to set current_song. I could also have
     /// the server pass it in.
-    struct Jukebox has key {
+    struct JukeboxV5 has key {
         current_song: Song,
         next_song_votes: Table::Table<address, Vote>,
     }
@@ -47,49 +48,41 @@ module AptosInfiniteJukebox::Jukebox {
 
     /// Initialize infinite jukebox.
     public(script) fun initialize_infinite_jukebox(account: &signer) {
-        let jukebox = Jukebox {
-            // TODO: Figure out how to get string "0H8XeaJunhvpBdBFIYi6Sh"
+        let jukebox = JukeboxV5 {
             current_song: Song { song: ASCII::string(b"0H8XeaJunhvpBdBFIYi6Sh") },
             next_song_votes: Table::new<address, Vote>(),
         };
         move_to(account, jukebox);
     }
 
-    public fun get_current_song(addr: address): ASCII::String acquires Jukebox {
-        assert!(exists<Jukebox>(addr), Errors::not_published(ENO_JUKEBOX));
-        *&borrow_global<Jukebox>(addr).current_song.song
+    // For now calling this externally doesn't work. Instead I'm going to use the REST API
+    // and just get the account resources.
+    public(script) fun get_current_song(addr: address): ASCII::String acquires JukeboxV5 {
+        // TODO: Use a different variant of Errors
+        assert!(exists<JukeboxV5>(addr), Errors::not_published(E_NO_JUKEBOX));
+        *&borrow_global<JukeboxV5>(addr).current_song.song
     }
 
-    /*
-    public(script) fun submit_vote(account: signer, message_bytes: vector<u8>)
-    acquires MessageHolder {
-        let message = ASCII::string(message_bytes);
-        let account_addr = Signer::address_of(&account);
-        if (!exists<MessageHolder>(account_addr)) {
-            move_to(&account, MessageHolder {
-                message,
-                message_change_events: Event::new_event_handle<MessageChangeEvent>(&account),
-            })
-        } else {
-            let old_message_holder = borrow_global_mut<MessageHolder>(account_addr);
-            let from_message = *&old_message_holder.message;
-            Event::emit_event(&mut old_message_holder.message_change_events, MessageChangeEvent {
-                from_message,
-                to_message: copy message,
-            });
-            old_message_holder.message = message;
-        }
-    }
-
+    /* TODO: Figure out a way to assert that this throws an error (which we expect it to).
     #[test(account = @0x1)]
-    public(script) fun sender_can_set_message(account: signer) acquires MessageHolder {
+    public(script) fun test_get_current_song_fails_without_initializing_first(account: signer) acquires JukeboxV5 {
         let addr = Signer::address_of(&account);
-        set_message(account,  b"Hello, Blockchain");
-
         assert!(
-          get_message(addr) == ASCII::string(b"Hello, Blockchain"),
-          ENO_MESSAGE
+          get_current_song(addr) == ASCII::string(b"0H8XeaJunhvpBdBFIYi6Sh"),
+          E_NO_JUKEBOX
         );
     }
     */
+
+    #[test(account = @0x1)]
+    public(script) fun initialize_get_current_song_works(account: signer) acquires JukeboxV5 {
+        let addr = Signer::address_of(&account);
+
+        initialize_infinite_jukebox(&account);
+
+        assert!(
+          get_current_song(addr) == ASCII::string(b"0H8XeaJunhvpBdBFIYi6Sh"),
+          E_NO_JUKEBOX
+        );
+    }
 }
