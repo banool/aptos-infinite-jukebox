@@ -1,14 +1,23 @@
 extern crate base64;
 
 use anyhow::{bail, Context, Result};
+// use aptos_types::transaction::{ModuleBundle, ScriptFunction, TransactionPayload};
 use clap::Parser;
 use log::{debug, info};
+/*
+use move_core_types::{
+    account_address::AccountAddress,
+    identifier::Identifier,
+    language_storage::{ModuleId, TypeTag},
+};
+*/
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
+use std::process::Command;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 pub fn current_unixtime_milliseconds() -> u64 {
@@ -82,6 +91,12 @@ struct Args {
     /// resolve the votes and decide the next song.
     #[clap(long, default_value = "2000")]
     resolve_votes_threshold_ms: u64,
+
+    /// Path to the directory that contains the .aptos config directory.
+    /// Temporary while we use the CLI (as opposed to using the libraries
+    /// natively).
+    #[clap(long, parse(from_os_str), default_value = "/Users/dport")]
+    aptos_cli_config_parent_directory: PathBuf,
 
     /// Whether to enable debug logging or not. This is a shortcut for the
     /// standard env logger configuration via env vars
@@ -197,12 +212,34 @@ async fn get_current_song_info(
 
 /// All times in milliseconds.
 /// TODO: Use proper time types instead of random numbers.
+/// This function determines whether we should trigger vote resolution,
+/// as in, is it time to progress to the next round and play a new song.
 fn should_we_trigger_vote_resolution(
     song_start_time: u64,
     song_duration: u64,
     resolve_votes_threshold_ms: u64,
 ) -> bool {
     current_unixtime_milliseconds() > (song_start_time + song_duration - resolve_votes_threshold_ms)
+}
+
+/// For now we just shell out to the CLI
+async fn trigger_vote_resolution(
+    module_address: &str,
+    module_name: &str,
+    aptos_cli_config_parent_directory: &PathBuf,
+) -> Result<()> {
+    let function_id = format!("{}::{}::resolve_votes", module_address, module_name);
+    let status = Command::new("aptos")
+        .current_dir(aptos_cli_config_parent_directory)
+        .args(["move", "run", "--function-id", &function_id])
+        .status()?;
+    if !status.success() {
+        bail!(
+            "Command failed with code {:?}",
+            status.code(),
+        );
+    }
+    Ok(())
 }
 
 fn load_cache(cache_path: &PathBuf) -> Result<Option<Cache>> {
@@ -331,6 +368,17 @@ async fn main() -> Result<()> {
         "We should trigger vote resolution: {}",
         we_should_trigger_vote_resolution
     );
+
+    if we_should_trigger_vote_resolution {
+        trigger_vote_resolution(
+            &module_address,
+            &args.module_name,
+            &args.aptos_cli_config_parent_directory,
+        )
+        .await
+        .context("Failed to trigger vote resolution")?;
+        info!("Successfully triggered vote resolution");
+    }
 
     Ok(())
 }
