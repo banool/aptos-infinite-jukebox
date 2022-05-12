@@ -16,7 +16,9 @@ import 'common.dart';
 const ImageDimension desiredImageDimension = ImageDimension.large;
 
 class PlayerPage extends StatefulWidget {
-  const PlayerPage({Key? key}) : super(key: key);
+  const PlayerPage(bool trackAboutToStart, {Key? key}) : super(key: key);
+
+  final bool trackAboutToStart = false;
 
   @override
   State<PlayerPage> createState() => _PlayerPageState();
@@ -83,6 +85,13 @@ class _PlayerPageState extends State<PlayerPage> {
   Widget build(BuildContext context) {
     // Here we assume ConnectionStatus.connected of SpotifySdk is true.
     // We also assume a track is playing.
+
+    print("TRACK ABOUT TO START: ${widget.trackAboutToStart}");
+    if (widget.trackAboutToStart) {
+      return buildWithScaffold(Column(
+        children: const [Text("Track about to start...")],
+      ));
+    }
 
     return StreamBuilder<PlayerState>(
         stream: SpotifySdk.subscribePlayerState(),

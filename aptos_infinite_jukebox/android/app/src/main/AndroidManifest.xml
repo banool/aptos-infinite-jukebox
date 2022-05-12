@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.aptos_infinite_jukebox">
+   <uses-permission android:name="android.permission.INTERNET" />
    <application
         android:label="aptos_infinite_jukebox"
         android:name="${applicationName}"
