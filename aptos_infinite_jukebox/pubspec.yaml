@@ -1,18 +1,19 @@
 name: aptos_infinite_jukebox
 description: An Infinite Jukebox powered by Aptos
 
-version: 1.0.9+10
+version: 1.0.10+11
 
 environment:
   sdk: ">=2.16.2 <3.0.0"
 
 dependencies:
+  cupertino_icons: ^1.0.2
   flutter:
     sdk: flutter
+  flutter_native_splash:
+  http:
   spotify_sdk:
   shared_preferences:
-  flutter_native_splash:
-  cupertino_icons: ^1.0.2
 
 dev_dependencies:
   flutter_test:
