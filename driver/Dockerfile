@@ -6,7 +6,8 @@ WORKDIR /build
 COPY . .
 
 # Add necessary dependencies.
-RUN apk add --no-cache openssl openssl-dev musl-dev
+RUN apk update
+RUN apk add --no-cache openssl openssl-dev musl-dev libc6-compat
 
 # Build the binary, strip it to make it smaller.
 RUN cargo build --release
