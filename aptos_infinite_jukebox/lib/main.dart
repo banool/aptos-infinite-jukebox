@@ -23,8 +23,7 @@ Future<void> setup() async {
   if (defaultTargetPlatform == TargetPlatform.iOS ||
       defaultTargetPlatform == TargetPlatform.android) {
     if (defaultTargetPlatform == TargetPlatform.iOS) {
-      spotifyRedirectUrl =
-          "https://aptos-infinite-jukebox.dport.me/auth_callback.html";
+      spotifyRedirectUrl = "spotify-ios-quick-start://spotify-login-callback";
     }
   } else if (defaultTargetPlatform == TargetPlatform.linux ||
       defaultTargetPlatform == TargetPlatform.macOS ||
