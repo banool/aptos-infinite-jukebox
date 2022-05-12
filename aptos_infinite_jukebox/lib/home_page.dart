@@ -154,6 +154,15 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> checkWhetherInSync() async {
     PlayerState? playerState = await SpotifySdk.getPlayerState();
     if (playerState != null) {
+      // With the way the voting works, the player will somtimes say it is
+      // out of sync near the end of a song, since the head will have updated
+      // but we're still finishing off the previous song. If we're in the last
+      // 10 seconds of the song, we just assume we're in sync.
+      bool nearEndOfSong = false;
+      if (playerState.track != null) {
+        nearEndOfSong =
+            playerState.track!.duration - playerState.playbackPosition < 10000;
+      }
       bool withinToleranceForPlaybackPosition =
           (playbackManager.getTargetPlaybackPosition() -
                       playerState.playbackPosition)
@@ -168,7 +177,8 @@ class _MyHomePageState extends State<MyHomePage> {
       print(
           "withinToleranceForPlaybackPosition: $withinToleranceForPlaybackPosition");
       print("playingCorrectSong: $playingCorrectSong");
-      bool inSync = withinToleranceForPlaybackPosition && playingCorrectSong;
+      bool inSync = withinToleranceForPlaybackPosition &&
+          (playingCorrectSong || nearEndOfSong);
       setState(() {
         outOfSync = !inSync;
       });
@@ -191,6 +201,13 @@ class _MyHomePageState extends State<MyHomePage> {
   // Particularly I think you need to tune in, let it advance to the next song,
   // then observe that it is playing the wrong song. Though on later testing
   // it seems correct, perhaps I just hadn't manually cleared the queue properly.
+  // TODO: Over time we expect some sync drift. Be a little smarter about resyncing
+  // if the user requests it, where instead of adding everything to queue, we
+  // just seek to correct location if the correct song is playing.
+  // TODO: With the way the voting works, the player will often say it is
+  // out of sync near the end of a song, since the head will have updated but
+  // we're still finishing off the previous song. If we're in the last 10 seconds
+  // of the song, assume we're in sync.
   Future<void> setupPlayer() async {
     // Unfortunately there is no way to clear a queue, but realistically
     // we need a way to do this here, otherwise it's going to get all fucky.
