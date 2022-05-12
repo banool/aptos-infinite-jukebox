@@ -1,0 +1,16 @@
+name: Build driver image
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: docker/build-push-action@v3
+      with:
+        context: "driver"
+        push: true
+        tags: latest
