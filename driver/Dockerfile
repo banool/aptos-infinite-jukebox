@@ -1,12 +1,12 @@
 # Start with a Rust alpine image.
-FROM rust:1.60-alpine3.15 as build
+FROM rust:1.60 as build
 
 # Copy in the code.
 WORKDIR /build
 COPY . .
 
-# Add necessary dependencies.
-RUN apk add --no-cache openssl openssl-dev musl-dev
+# Add the necessary libraries to build the binaries.
+RUN apt-get update && apt-get install -y libclang-dev
 
 # Get the aptos CLI
 RUN cargo install --git https://github.com/aptos-labs/aptos-core.git aptos --root /
@@ -16,14 +16,11 @@ RUN cargo build --release
 RUN strip target/release/driver
 
 # Make a new build stage.
-FROM alpine:3.15
+FROM debian:buster-slim
 
 # Copy in the binary from the previous build stage.
 COPY --from=build /build/target/release/driver /bin/driver
 COPY --from=build /bin/aptos /bin/aptos
-
-# Add the necessary libraries for running this binary.
-RUN apk add --no-cache libc6-compat
 
 # Run it.
 ENTRYPOINT ["/bin/driver"]
