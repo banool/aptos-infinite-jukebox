@@ -79,7 +79,7 @@ struct Args {
 
     /// The module name. We assume the module name and top level struct
     /// name are identical, as is the convention.
-    #[clap(long, default_value = "JukeboxV6")]
+    #[clap(long, default_value = "JukeboxV7")]
     module_name: String,
 
     /// Aptos address where the module is published. If not given, we
@@ -88,8 +88,10 @@ struct Args {
     module_address: Option<String>,
 
     /// Amount of time prior to end of the current song that we should
-    /// resolve the votes and decide the next song.
-    #[clap(long, default_value = "2000")]
+    /// resolve the votes and decide the next song. This essentially
+    /// means that if we trigger vote resolution and then someone immediately
+    /// tunes in, they'll have to wait this long before they start playing music.
+    #[clap(long, default_value = "5000")]
     resolve_votes_threshold_ms: u64,
 
     /// Path to the directory that contains the .aptos config directory.
@@ -189,8 +191,8 @@ async fn get_current_song_info(
         .get("inner")
         .context("No field \"inner\" in response")?;
     let track_id = inner
-        .get("current_song")
-        .context("No field \"current_song\" in data")?
+        .get("song_queue")
+        .context("No field \"song_queue\" in data")?[0]
         .get("song")
         .context("No field \"song\" in current_song")?
         .as_str()
@@ -234,10 +236,7 @@ async fn trigger_vote_resolution(
         .args(["move", "run", "--function-id", &function_id])
         .status()?;
     if !status.success() {
-        bail!(
-            "Command failed with code {:?}",
-            status.code(),
-        );
+        bail!("Command failed with code {:?}", status.code(),);
     }
     Ok(())
 }
