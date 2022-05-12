@@ -72,11 +72,18 @@ module AptosInfiniteJukebox::JukeboxV7 {
         let q = Vector::empty<Song>();
         // Bootstrap the queue with NUM_SONGS_IN_QUEUE songs.
         // If we change this number, change the tests too.
+
+        // White Winter Hymnal
         Vector::push_back(&mut q, Song { song: ASCII::string(b"3QVtICc8ViNOy4I5K14d8Z") });
+        // Mamadou Kanda Keita
         Vector::push_back(&mut q, Song { song: ASCII::string(b"6jgeug0bubcri5YcS23WeQ") });
+        // Anaguragurashi
         Vector::push_back(&mut q, Song { song: ASCII::string(b"3FvzeaesPY35bhhj55u4zJ") });
+        // Uncover
         Vector::push_back(&mut q, Song { song: ASCII::string(b"2oFbMd0TcgUm7Df4Sx16h9") });
+        // Igor's Theme
         Vector::push_back(&mut q, Song { song: ASCII::string(b"51RN0kzWd7xeR4th5HsEtW") });
+
         assert!(Vector::length(&q) == NUM_SONGS_IN_QUEUE, Errors::internal(E_BROKEN_INTERNAL_INVARIANT));
         let inner = Inner {
             song_queue: q,
