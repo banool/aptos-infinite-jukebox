@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:aptos_infinite_jukebox/common.dart';
 import 'package:http/http.dart' as http;
-import 'package:spotify_sdk/spotify_sdk.dart';
 
 /// If the playback is more than this amount out of sync with the intentional
 /// playback position, we consider it to be out of sync and offer the user
@@ -11,13 +10,15 @@ const int outOfSyncThresholdMilli = 2000000;
 
 class PlaybackManager {
   String? latestConsumedTrack;
+  String? headOfRemoteQueue;
   DateTime targetTrackStartMilli;
 
-  PlaybackManager(this.latestConsumedTrack, this.targetTrackStartMilli);
+  PlaybackManager(this.latestConsumedTrack, this.headOfRemoteQueue,
+      this.targetTrackStartMilli);
 
   static Future<PlaybackManager> getPlaybackManager() async {
     var playbackManager =
-        PlaybackManager(null, DateTime.fromMillisecondsSinceEpoch(0));
+        PlaybackManager(null, null, DateTime.fromMillisecondsSinceEpoch(0));
     return playbackManager;
   }
 
@@ -47,6 +48,10 @@ class PlaybackManager {
       rawTrackQueue.add(o["song"]!);
     }
 
+    // Store which song is currently at the head of the queue, for the sake
+    // of checking that we're in sync.
+    headOfRemoteQueue = rawTrackQueue.first;
+
     // Determine which tracks are new.
     List<String> newTracksBackwards = [];
     for (String s in rawTrackQueue.reversed.toList()) {
@@ -72,11 +77,11 @@ class PlaybackManager {
   // For now we don't handle when the song has ended.
   int getTargetPlaybackPosition() {
     var now = DateTime.now().millisecondsSinceEpoch;
-    print("Now: $now");
-    print("Target: ${targetTrackStartMilli.millisecondsSinceEpoch}");
     return now - targetTrackStartMilli.millisecondsSinceEpoch;
   }
 }
+
+// TODO add something to tell users to make sure their system time is correct.
 
 /*
     let resource_type = format!("0x{}::{}::{}", module_address, module_name, module_name);

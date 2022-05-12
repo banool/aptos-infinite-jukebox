@@ -91,6 +91,15 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget getNoAccessTokenScreen({String? errorString}) {
+    // This is janky but I'm only subscribed to the connection status
+    // in the builder, so I have to schedule this state change here.
+    // Perhaps I need some out of band thing to subscribe to it also?
+    WidgetsBinding.instance!.addPostFrameCallback((_) => setState(() {
+          if (tunedIn) {
+            print("Setting tunedIn to false due to disconnection");
+            tunedIn = false;
+          }
+        }));
     if (awaitingReturnFromConnectionAttempt) {
       return Column(
         children: const [
@@ -106,8 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
     List<Widget> children = [];
     if (errorString != null) {
       children += [
-        Text("Try again:"),
-        Text("Error from previous connection attempt: $errorString"),
+        Text("Disconnected from Spotify: $errorString"),
       ];
     }
     children += [
@@ -123,10 +131,38 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       tunedIn = true;
     });
-    Timer.periodic(Duration(seconds: 10), (_) {
+    Timer.periodic(Duration(seconds: 10), (timer) async {
+      if (!tunedIn) {
+        print("Tuned out, cancelling timer");
+        timer.cancel();
+      }
       print("Checking for queue / playback updates");
-      updateQueue();
+      await updateQueue();
     });
+  }
+
+  Future<void> checkWhetherInSync() async {
+    PlayerState? playerState = await SpotifySdk.getPlayerState();
+    if (playerState != null) {
+      bool withinToleranceForPlaybackPosition =
+          (playbackManager.getTargetPlaybackPosition() -
+                      playerState.playbackPosition)
+                  .abs() <
+              outOfSyncThresholdMilli;
+      bool playingCorrectSong = true;
+      if (playerState.track != null &&
+          playbackManager.headOfRemoteQueue != null) {
+        playingCorrectSong =
+            playerState.track!.uri.endsWith(playbackManager.headOfRemoteQueue!);
+      }
+      print(
+          "withinToleranceForPlaybackPosition: $withinToleranceForPlaybackPosition");
+      print("playingCorrectSong: $playingCorrectSong");
+      bool inSync = withinToleranceForPlaybackPosition && playingCorrectSong;
+      setState(() {
+        outOfSync = !inSync;
+      });
+    }
   }
 
   /// Call this function periodically to ensure that new songs are added to
@@ -138,18 +174,7 @@ class _MyHomePageState extends State<MyHomePage> {
       await SpotifySdk.queue(spotifyUri: spotifyUri);
       print("Added track to queue: $spotifyUri");
     }
-    PlayerState? playerState = await SpotifySdk.getPlayerState();
-    if (playerState != null) {
-      setState(() {
-        bool withinToleranceForPlaybackPosition =
-            (playbackManager.getTargetPlaybackPosition() -
-                        playerState.playbackPosition)
-                    .abs() >
-                outOfSyncThresholdMilli;
-        // TODO: Check that we're playing the correct song too perhaps.
-        outOfSync = withinToleranceForPlaybackPosition;
-      });
-    }
+    await checkWhetherInSync();
   }
 
   // TODO: There seems to be a bug where we skip a song in the queue for some reason.
@@ -160,6 +185,8 @@ class _MyHomePageState extends State<MyHomePage> {
     // Unfortunately there is no way to clear a queue, but realistically
     // we need a way to do this here, otherwise it's going to get all fucky.
     // Calling skipNext a bunch of times first leads to poor results.
+    playbackManager.headOfRemoteQueue = null;
+    playbackManager.latestConsumedTrack = null;
     await updateQueue();
     int playbackPosition = playbackManager.getTargetPlaybackPosition();
     print("Playback position: $playbackPosition");
@@ -169,6 +196,7 @@ class _MyHomePageState extends State<MyHomePage> {
       await SpotifySdk.seekTo(positionedMilliseconds: playbackPosition);
       //await playTrack(playbackManager.targetTrackId,
       //   playbackPosition: playbackPosition);
+      await checkWhetherInSync();
     } else {
       // The track will start soon. Schedule it for then.
       setState(() {
@@ -179,6 +207,7 @@ class _MyHomePageState extends State<MyHomePage> {
         setState(() {
           trackAboutToStart = false;
         });
+        await checkWhetherInSync();
       });
     }
   }
@@ -271,7 +300,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Text("Tune in"),
               ));
             } else {
-              return PlayerPage(trackAboutToStart);
+              return PlayerPage(trackAboutToStart, outOfSync, setupPlayer);
             }
           }
         });

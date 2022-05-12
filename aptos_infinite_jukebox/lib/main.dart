@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:aptos_infinite_jukebox/playback_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -12,6 +14,13 @@ Future<void> setup() async {
 
   // Preserve the splash screen while the app initializes.
   //FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  if (Platform.isIOS) {
+    spotifyRedirectUrl = "spotify-ios-quick-start://spotify-login-callback";
+  } else {
+    spotifyRedirectUrl =
+        "https://aptos-infinite-jukebox.dport.me/auth_callback.html";
+  }
 
   // Load shared preferences. We do this first because the later futures,
   // such as loadFavourites and the knobs, depend on it being initialized.
