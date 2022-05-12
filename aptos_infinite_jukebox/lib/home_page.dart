@@ -119,8 +119,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ];
     }
     children += [
-      TextButton(
-          child: Text("Connect to Spotify"), onPressed: getNewAccessToken)
+      getConnectionButton("Connect to Spotify", getNewAccessToken);
     ];
     return Column(children: children);
   }
@@ -265,6 +264,26 @@ class _MyHomePageState extends State<MyHomePage> {
     )));
   }
 
+  Widget getConnectionButton(String text, void Function() onPressed) {
+    Border? border;
+    return Container(
+        padding: EdgeInsets.all(5),
+        width: 150,
+        decoration: BoxDecoration(
+            color: Color.fromRGBO(101, 212, 110, 1.0),
+            border: border,
+            borderRadius: BorderRadius.all(Radius.circular(20))),
+        child: TextButton(
+            onPressed: onPressed,
+            style: ButtonStyle(
+              foregroundColor: MaterialStateProperty.all(Colors.white),
+            ),
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 18),
+            )));
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget widget = StreamBuilder<ConnectionStatus>(
@@ -295,10 +314,8 @@ class _MyHomePageState extends State<MyHomePage> {
             return buildWithScaffold(getNoAccessTokenScreen());
           } else {
             if (!tunedIn) {
-              return buildWithScaffold(TextButton(
-                onPressed: tuneIn,
-                child: Text("Tune in"),
-              ));
+              var button = getConnectionButton("Tune in", tuneIn);
+              return buildWithScaffold(button);
             } else {
               return PlayerPage(trackAboutToStart, outOfSync, setupPlayer);
             }

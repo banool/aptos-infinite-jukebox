@@ -147,14 +147,14 @@ class _PlayerPageState extends State<PlayerPage> {
               {void Function()? onPressed, bool includeBorder = true}) {
             Border? border;
             if (includeBorder) {
-              border = Border.all(color: mainColor, width: 3);
+              border = Border.all(color: mainColor, width: 2);
             }
             return Container(
-                padding: EdgeInsets.all(5),
+                padding: EdgeInsets.all(4),
                 decoration: BoxDecoration(
                     color: backgroundColor,
                     border: border,
-                    borderRadius: BorderRadius.all(Radius.circular(10))),
+                    borderRadius: BorderRadius.all(Radius.circular(15))),
                 child: TextButton(
                     onPressed: onPressed,
                     style: ButtonStyle(
@@ -163,7 +163,7 @@ class _PlayerPageState extends State<PlayerPage> {
                     ),
                     child: Text(
                       text,
-                      style: TextStyle(fontSize: 18),
+                      style: TextStyle(fontSize: 16),
                     )));
           }
 
