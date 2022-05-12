@@ -152,9 +152,14 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  // TODO: There seems to be a bug where we skip a song in the queue for some reason.
+  // Particularly I think you need to tune in, let it advance to the next song,
+  // then observe that it is playing the wrong song. Though on later testing
+  // it seems correct, perhaps I just hadn't manually cleared the queue properly.
   Future<void> setupPlayer() async {
     // Unfortunately there is no way to clear a queue, but realistically
-    // we need a way to do this here.
+    // we need a way to do this here, otherwise it's going to get all fucky.
+    // Calling skipNext a bunch of times first leads to poor results.
     await updateQueue();
     int playbackPosition = playbackManager.getTargetPlaybackPosition();
     print("Playback position: $playbackPosition");
