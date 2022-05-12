@@ -2,6 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:../../../../Downloads/ios-sdk-1.2.2 2/SpotifyiOS.framework">
+   </FileRef>
+   <FileRef
       location = "group:Runner.xcodeproj">
    </FileRef>
    <FileRef
