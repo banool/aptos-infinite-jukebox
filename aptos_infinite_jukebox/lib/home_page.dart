@@ -45,14 +45,24 @@ class _MyHomePageState extends State<MyHomePage> {
   // TODO: Put a timeout on this.
   Future<void> getNewAccessToken() async {
     try {
+      print("Getting new access token");
       setState(() {
         awaitingReturnFromConnectionAttempt = true;
       });
+      String? scope;
+      if (onWeb) {
+        scope = spotifyAccessTokenScope;
+      }
       String accessToken = await SpotifySdk.getAccessToken(
         clientId: spotifyClientId,
-        redirectUrl: spotifyRedirectUrl, /*scope: spotifyAccessTokenScope*/
+        redirectUrl: spotifyRedirectUrl,
+        scope: scope,
       );
-      await sharedPreferences.setString(keySpotifyAccessToken, accessToken);
+      // Don't bother storing the token on web.
+      if (!onWeb) {
+        await sharedPreferences.setString(keySpotifyAccessToken, accessToken);
+      }
+      print("Got new access token");
       await connectToSpotify(accessToken);
     } catch (e) {
       await sharedPreferences.remove(keySpotifyAccessToken);
@@ -61,11 +71,13 @@ class _MyHomePageState extends State<MyHomePage> {
         awaitingReturnFromConnectionAttempt = false;
         tunedIn = false;
       });
+      print("Failed to get new access token");
     }
   }
 
   Future<void> connectToSpotify(String accessToken) async {
     try {
+      print("Trying to connect to Spotify");
       setState(() {
         awaitingReturnFromConnectionAttempt = true;
       });
@@ -87,6 +99,7 @@ class _MyHomePageState extends State<MyHomePage> {
         awaitingReturnFromConnectionAttempt = false;
         tunedIn = false;
       });
+      print("Failed to connect to Spotify: $e");
     }
   }
 
@@ -118,9 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
         Text("Disconnected from Spotify: $errorString"),
       ];
     }
-    children += [
-      getConnectionButton("Connect to Spotify", getNewAccessToken);
-    ];
+    children += [getConnectionButton("Connect to Spotify", getNewAccessToken)];
     return Column(children: children);
   }
 
@@ -211,50 +222,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  /*
-  Future<void> playTrack(String trackId, {int? playbackPosition}) async {
-    await SpotifySdk.queue(spotifyUri: uri);
-    if (playbackPosition != null) {
-      await SpotifySdk.seekTo(positionedMilliseconds: playbackPosition);
-    }
-    setState(() {
-      trackAboutToStart = false;
-    });
-    var playerState = await SpotifySdk.getPlayerState();
-    var trackLengthMilliseconds = playerState!.track!.duration;
-    // Handle the case where we try to scrub to a position in the song after
-    // the end of the track. This can happen if the driver isn't working.
-    // In this case we want to stop playing again. Unfortunately we have to
-    // check this here since we don't know the song duration until we play it.
-    // Update: TODO: This doesn't work well, it plays the song for a moment,
-    // then it ends, then Spotify just plays another song related to that song.
-    /*
-    if (playbackPosition != null &&
-        playbackPosition > trackLengthMilliseconds) {
-      await SpotifySdk.pause();
-      // Set this so we check again in 1 second.
-      trackLengthMilliseconds = 1000;
-    }
-    */
-    int delay = trackLengthMilliseconds - (playbackPosition ?? 0);
-    Future.delayed(Duration(milliseconds: delay), () async {
-      print("Reached end of song, pausing player");
-      await SpotifySdk.pause();
-      // TODO I think the best way to make this actually work is to use the
-      // queue function. Similarly, the smart contract should maintain said
-      // queue, so clients can queue up the next 10 songs and periodically
-      // check in to add more songs to the queue. This is easier than trying
-      // to time playing the next song with the driver.
-      // TODO: I need a button that lets users resync with the intended
-      // playback position if they fall a bit out of sync.
-      await syncPlayer();
-    });
-    // TODO: Also, make it that if tunedIn turns to false, cancel that timer.
-    // Also make it that tunedIn turns to false if the connection breaks.
-    // Perhaps tunedIn should be deprecated in favor of subscribing to the player state.
-  }
-  */
-
   Widget buildWithScaffold(Widget body) {
     return Scaffold(
         body: Center(
@@ -267,8 +234,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget getConnectionButton(String text, void Function() onPressed) {
     Border? border;
     return Container(
-        padding: EdgeInsets.all(5),
-        width: 150,
+        padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
         decoration: BoxDecoration(
             color: Color.fromRGBO(101, 212, 110, 1.0),
             border: border,

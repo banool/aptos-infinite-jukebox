@@ -1,5 +1,7 @@
 *.cer
 publish.env
+*.ipa
+*.app.dSYM.zip
 
 *.mobileprovision
 *.mode1v3

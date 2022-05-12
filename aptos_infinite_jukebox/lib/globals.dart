@@ -4,3 +4,5 @@ import 'playback_manager.dart';
 
 late SharedPreferences sharedPreferences;
 late PlaybackManager playbackManager;
+
+late bool onWeb;

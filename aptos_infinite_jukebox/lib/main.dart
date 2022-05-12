@@ -4,22 +4,33 @@ import 'package:aptos_infinite_jukebox/playback_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 import 'common.dart';
 import 'globals.dart';
 import 'home_page.dart';
 
 Future<void> setup() async {
+  print("Setup starting");
   var widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
 
   // Preserve the splash screen while the app initializes.
   //FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  if (Platform.isIOS) {
-    spotifyRedirectUrl = "spotify-ios-quick-start://spotify-login-callback";
+  onWeb = false;
+  spotifyRedirectUrl =
+      "https://aptos-infinite-jukebox.dport.me/auth_callback.html";
+  if (defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.android) {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      spotifyRedirectUrl =
+          "https://aptos-infinite-jukebox.dport.me/auth_callback.html";
+    }
+  } else if (defaultTargetPlatform == TargetPlatform.linux ||
+      defaultTargetPlatform == TargetPlatform.macOS ||
+      defaultTargetPlatform == TargetPlatform.windows) {
   } else {
-    spotifyRedirectUrl =
-        "https://aptos-infinite-jukebox.dport.me/auth_callback.html";
+    onWeb = true;
   }
 
   // Load shared preferences. We do this first because the later futures,
@@ -29,6 +40,7 @@ Future<void> setup() async {
   playbackManager = await PlaybackManager.getPlaybackManager();
 
   //FlutterNativeSplash.remove();
+  print("Setup finished");
 }
 
 Future<void> main() async {
