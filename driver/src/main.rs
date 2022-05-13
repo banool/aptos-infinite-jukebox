@@ -91,7 +91,9 @@ struct Args {
     /// resolve the votes and decide the next song. This essentially
     /// means that if we trigger vote resolution and then someone immediately
     /// tunes in, they'll have to wait this long before they start playing music.
-    #[clap(long, default_value = "10000")]
+    /// The driver should be configured to run every x seconds where x is half
+    /// or less of this value.
+    #[clap(long, default_value = "20000")]
     resolve_votes_threshold_ms: u64,
 
     /// Path to the directory that contains the .aptos config directory.
