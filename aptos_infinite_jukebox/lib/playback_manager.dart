@@ -4,6 +4,8 @@ import 'package:aptos_infinite_jukebox/constants.dart';
 import 'package:aptos_infinite_jukebox/globals.dart';
 import 'package:http/http.dart' as http;
 
+// TODO: I really want to be using Events here I believe.
+
 /// If the playback is more than this amount out of sync with the intentional
 /// playback position, we consider it to be out of sync and offer the user
 /// a button that they can press to resync.
@@ -27,8 +29,6 @@ class PlaybackManager {
   /// songs ending (try every 10 seconds). This will make sure that we are
   /// queueing up new songs as they appear and we know if we're out of sync.
   Future<List<String>> pull() async {
-    // TODO: Make these addresses selectable by the user.
-
     String moduleAddress =
         sharedPreferences.getString(keyModuleAddress) ?? defaultModuleAddress;
     String moduleName =
@@ -90,41 +90,3 @@ class PlaybackManager {
     return now - targetTrackStartMilli.millisecondsSinceEpoch;
   }
 }
-
-// TODO add something to tell users to make sure their system time is correct.
-
-/*
-    let resource_type = format!("0x{}::{}::{}", module_address, module_name, module_name);
-    let uri = format!(
-        "{}/accounts/{}/resource/{}",
-        node_url, account_public_address, resource_type
-    );
-    let client = Client::new();
-    let res = client.get(uri).send().await?;
-    let res_json: serde_json::Value = serde_json::from_str(&res.text().await?)?;
-    // debug!("Raw current song info response: {:#?}", res_json);
-    let inner = res_json
-        .get("data")
-        .context("No field \"data\" in response")?
-        .get("inner")
-        .context("No field \"inner\" in response")?;
-    let track_id = inner
-        .get("current_song")
-        .context("No field \"current_song\" in data")?
-        .get("song")
-        .context("No field \"song\" in current_song")?
-        .as_str()
-        .context("song wasn't a string")?
-        .to_owned();
-    let time_to_start_playing = inner
-        .get("time_to_start_playing")
-        .context("No field \"time_to_start_playing\" in data")?
-        .as_str()
-        .context("time_to_start_playing wasn't a string (which we later convert into u64)")?
-        .to_owned()
-        .parse::<u64>()?;
-    let out = CurrentSongInfo {
-        track_id,
-        time_to_start_playing,
-    };
-    */

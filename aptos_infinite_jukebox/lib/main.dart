@@ -12,6 +12,7 @@ import 'globals.dart';
 
 Future<void> setup() async {
   print("Setup starting");
+
   var widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
 
   // Preserve the splash screen while the app initializes.

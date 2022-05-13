@@ -1,3 +1,4 @@
+import 'package:aptos_infinite_jukebox/troubleshooting_help_page.dart';
 import 'package:flutter/material.dart';
 import 'package:settings_ui/settings_ui.dart';
 
@@ -102,17 +103,25 @@ class SettingsPageState extends State<SettingsPage> {
         margin: margin,
       ),
       SettingsSection(
-          title: Text('Community'),
-          tiles: [
-            SettingsTile.navigation(
-              title: getText(
-                'Report issue with app',
-              ),
-              trailing: Container(),
-              onPressed: (BuildContext context) async {},
+        title: Text('Community'),
+        tiles: [
+          SettingsTile.navigation(
+            title: getText(
+              'App FAQ',
             ),
-          ],
-          margin: margin),
+            trailing: Container(),
+            onPressed: (BuildContext context) async {
+              return await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => getTroubleshootingHelpPage(
+                        widget.pageSelectorController),
+                  ));
+            },
+          )
+        ],
+        margin: margin,
+      ),
     ];
 
     List<AbstractSettingsSection> nonNullSections = [];
@@ -152,23 +161,14 @@ Future<bool> showChangeStringSharedPrefDialog(
   TextField textField = TextField(
     controller: textController,
   );
-  Row content = Row(
-    children: [
-      textField,
-      Padding(padding: EdgeInsets.only(left: 10)),
-      IconButton(
-          onPressed: () {
-            textController.text = defaultValue;
-          },
-          icon: Icon(Icons.restore))
-    ],
-  );
+  // ignore: deprecated_member_use
   Widget cancelButton = FlatButton(
     child: Text(cancelText),
     onPressed: () {
       Navigator.of(context).pop();
     },
   );
+  // ignore: deprecated_member_use
   Widget continueButton = FlatButton(
     child: Text(confirmText),
     onPressed: () async {
@@ -180,10 +180,16 @@ Future<bool> showChangeStringSharedPrefDialog(
     },
   );
   AlertDialog alert = AlertDialog(
-    title: Text(title),
-    // TODO: Figure out how to make this row render happily.
-    //content: Expanded(child: content),
-    content: Text("asdfdsf"),
+    title: Row(children: [
+      Text(title),
+      Spacer(),
+      IconButton(
+          onPressed: () {
+            textController.text = defaultValue;
+          },
+          icon: Icon(Icons.restore))
+    ]),
+    content: textField,
     actions: [
       cancelButton,
       continueButton,
