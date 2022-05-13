@@ -280,7 +280,7 @@ async fn main() -> Result<()> {
 
     // TODO: Use the proper types for these.
     if args.account_public_address.starts_with("0x") || module_address.starts_with("0x") {
-        bail!("Do not prefix address with 0x");
+        bail!("Do not prefix addresses with 0x");
     }
 
     let cache_option = load_cache(&args.cache_path).context("Failed to load cache")?;

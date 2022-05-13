@@ -5,11 +5,14 @@ FROM rust:1.60 as build
 WORKDIR /build
 COPY . .
 
-# Add the necessary libraries to build the binaries.
-RUN apt-get update && apt-get install -y libclang-dev
+# Add the necessary libraries to build / get the binaries.
+RUN apt-get update && apt-get install -y libclang-dev wget unzip
 
-# Get the aptos CLI
-RUN cargo install --git https://github.com/aptos-labs/aptos-core.git aptos --root /
+# Download the aptos CLI.
+RUN wget https://github.com/aptos-labs/aptos-core/releases/download/cli-latest/aptos-v0.1.0-linux-x86_64.zip -O aptos.zip
+
+# Move it into position.
+RUN unzip aptos.zip
 
 # Build the binary, strip it to make it smaller.
 RUN cargo build --release
@@ -18,9 +21,12 @@ RUN strip target/release/driver
 # Make a new build stage.
 FROM debian:buster-slim
 
-# Copy in the binary from the previous build stage.
+# Copy in the binaries from the previous build stage.
 COPY --from=build /build/target/release/driver /bin/driver
-COPY --from=build /bin/aptos /bin/aptos
+COPY --from=build /build/aptos /bin/aptos
 
-# Run it.
+# TODO: Add glibc here or whatever is needed
+RUN apt-get update && apt-get install -y libssl-dev 
+
+# Run the driver.
 ENTRYPOINT ["/bin/driver"]

@@ -1,7 +1,5 @@
 name: Build driver image
 
-sadfdsff make this fail
-
 on:
   push:
     branches: [ main ]
@@ -16,7 +14,7 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    - uses: docker/build-push-action@v3
+    - uses: docker/build-push-action@v2
       with:
         context: "driver"
         push: true
