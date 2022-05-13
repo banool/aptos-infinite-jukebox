@@ -9,7 +9,7 @@ const String spotifyClientId = "e02b0452a18948a9a963b35bd4a4f743";
 late String spotifyRedirectUrl;
 
 const String spotifyAccessTokenScope =
-    "app-remote-control,user-modify-playback-state,playlist-read-private,playlist-modify-public,user-read-currently-playing";
+    "streaming user-read-email user-read-private user-read-currently-playing user-read-playback-state user-read-playback-position user-modify-playback-state";
 
 // Shared preferences keys.
 const String keySpotifyAccessToken = "keySpotifyAccessToken";

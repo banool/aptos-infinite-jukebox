@@ -2,11 +2,7 @@ import 'dart:async';
 
 import 'package:aptos_infinite_jukebox/globals.dart';
 import 'package:aptos_infinite_jukebox/page_selector.dart';
-import 'package:aptos_infinite_jukebox/playback_manager.dart';
-import 'package:aptos_infinite_jukebox/player_page.dart';
 import 'package:flutter/material.dart';
-import 'package:spotify_sdk/models/connection_status.dart';
-import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 
 import 'common.dart';
@@ -56,21 +52,26 @@ class LoginPageState extends State<LoginPage> {
     });
   }
 
+  String? getScope() {
+    String? scope;
+    if (onWeb) {
+      scope = spotifyAccessTokenScope;
+    }
+    return scope;
+  }
+
   // TODO: Put a timeout on this.
   Future<void> getAccessTokenAndConnect() async {
     try {
       print("Getting new access token");
       setState(() {
         connectingInformation = "Getting new access token";
+        connectionErrorString = null;
       });
-      String? scope;
-      if (onWeb) {
-        scope = spotifyAccessTokenScope;
-      }
       String accessToken = await SpotifySdk.getAccessToken(
         clientId: spotifyClientId,
         redirectUrl: spotifyRedirectUrl,
-        scope: scope,
+        scope: getScope(),
       );
       // Don't bother storing the token on web.
       if (!onWeb) {
@@ -91,19 +92,22 @@ class LoginPageState extends State<LoginPage> {
       print("Trying to connect to Spotify");
       setState(() {
         connectingInformation = "Connecting to Spotify";
+        connectionErrorString = null;
       });
       await SpotifySdk.connectToSpotifyRemote(
         clientId: spotifyClientId,
         redirectUrl: spotifyRedirectUrl,
         // TOOD: See whether we need this for web.
-        //scope: spotifyAccessTokenScope,
+        scope: getScope(),
         playerName: appTitle,
         accessToken: accessToken,
       );
-      setState(() {
-        connectingInformation = null;
-        connectionErrorString = null;
-      });
+      if (mounted) {
+        setState(() {
+          connectingInformation = null;
+          connectionErrorString = null;
+        });
+      }
       print("Successfully connected to Spotify");
     } catch (e) {
       await handleConnectionError(e);

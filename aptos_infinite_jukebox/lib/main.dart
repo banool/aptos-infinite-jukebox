@@ -23,6 +23,7 @@ Future<void> setup() async {
   } else if (defaultTargetPlatform == TargetPlatform.linux ||
       defaultTargetPlatform == TargetPlatform.macOS ||
       defaultTargetPlatform == TargetPlatform.windows) {
+    onWeb = true;
   } else {
     onWeb = true;
   }

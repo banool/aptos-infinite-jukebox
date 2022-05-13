@@ -34,6 +34,7 @@ class PlayerSelectorState extends State<PlayerSelector> {
                 pageSelectorController: widget.pageSelectorController);
           }
           ConnectionStatus connectionStatus = snapshot.data!;
+          print("Connected: ${connectionStatus.connected}");
 
           Widget page;
           if (connectionStatus.connected) {
@@ -44,7 +45,7 @@ class PlayerSelectorState extends State<PlayerSelector> {
                 pageSelectorController: widget.pageSelectorController);
           }
 
-          return buildTopLevelScaffold(widget.pageSelectorController, page);
+          return page;
 
           /*
           String? errorString;

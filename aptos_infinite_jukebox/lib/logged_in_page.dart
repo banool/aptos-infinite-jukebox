@@ -38,7 +38,8 @@ class LoggedInPageState extends State<LoggedInPage> {
   */
 
   Future<void> tuneIn() async {
-    await SpotifySdk.pause();
+    print("Tuning in");
+    //await SpotifySdk.pause();
     await setupPlayer();
     setState(() {
       widget.pageSelectorController.tunedIn = true;
@@ -94,12 +95,15 @@ class LoggedInPageState extends State<LoggedInPage> {
     List<String> tracksToQueue = await playbackManager.pull();
     for (String trackId in tracksToQueue) {
       var spotifyUri = "spotify:track:$trackId";
+      print("about to queue");
       await SpotifySdk.queue(spotifyUri: spotifyUri);
       print("Added track to queue: $spotifyUri");
     }
     await checkWhetherInSync();
   }
 
+  // TODO: The tune in and connectb uttons only trigger whne you hit the text
+  // in the middle. Fix that
   // TODO: There seems to be a bug where we skip a song in the queue for some reason.
   // Particularly I think you need to tune in, let it advance to the next song,
   // then observe that it is playing the wrong song. Though on later testing
@@ -112,11 +116,15 @@ class LoggedInPageState extends State<LoggedInPage> {
   // we're still finishing off the previous song. If we're in the last 10 seconds
   // of the song, assume we're in sync.
   Future<void> setupPlayer() async {
+    print("Setting up player afresh");
     // Unfortunately there is no way to clear a queue, but realistically
     // we need a way to do this here, otherwise it's going to get all fucky.
     // Calling skipNext a bunch of times first leads to poor results.
     playbackManager.headOfRemoteQueue = null;
     playbackManager.latestConsumedTrack = null;
+    // TODO: As it is now, the Spotify SDK cannot seem to do anything on web
+    // even with a successful login. This includes queueing, playing, getting
+    // the player state, etc.
     await updateQueue();
     int playbackPosition = playbackManager.getTargetPlaybackPosition();
     print("Playback position: $playbackPosition");
@@ -127,6 +135,7 @@ class LoggedInPageState extends State<LoggedInPage> {
       //await playTrack(playbackManager.targetTrackId,
       //   playbackPosition: playbackPosition);
       await checkWhetherInSync();
+      print("Set up player midway through song");
     } else {
       // The track will start soon. Schedule it for then.
       setState(() {
@@ -138,15 +147,23 @@ class LoggedInPageState extends State<LoggedInPage> {
           trackAboutToStart = false;
         });
         await checkWhetherInSync();
+        print("Set up player after waiting for song to start");
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (trackAboutToStart) {
+      var body = Column(
+        children: const [Text("Track about to start...")],
+      );
+      return buildTopLevelScaffold(widget.pageSelectorController, body,
+          title: "Tuning in...");
+    }
+
     if (widget.pageSelectorController.tunedIn) {
-      return PlayerPage(widget.pageSelectorController, trackAboutToStart,
-          outOfSync, setupPlayer);
+      return PlayerPage(widget.pageSelectorController, outOfSync, setupPlayer);
     }
 
     List<Widget> children = [];
