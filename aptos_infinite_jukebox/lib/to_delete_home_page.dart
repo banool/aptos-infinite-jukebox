@@ -10,6 +10,8 @@ import 'package:spotify_sdk/spotify_sdk.dart';
 
 import 'common.dart';
 
+// TODO DELETE THIS PAGE ONCE OYU KNOW THE REFACTOR WORKS
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
 
@@ -84,6 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
       await SpotifySdk.connectToSpotifyRemote(
         clientId: spotifyClientId,
         redirectUrl: spotifyRedirectUrl,
+        // TOOD: See whether we need this for web.
         //scope: spotifyAccessTokenScope,
         playerName: appTitle,
         accessToken: accessToken,

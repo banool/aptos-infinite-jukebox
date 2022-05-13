@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:aptos_infinite_jukebox/page_selector.dart';
 import 'package:aptos_infinite_jukebox/playback_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -8,7 +9,7 @@ import 'package:flutter/foundation.dart';
 
 import 'common.dart';
 import 'globals.dart';
-import 'home_page.dart';
+import 'to_delete_home_page.dart';
 
 Future<void> setup() async {
   print("Setup starting");
@@ -59,7 +60,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: mainColor as MaterialColor,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const MyHomePage(),
+      home: const PageSelector(),
     );
   }
 }
