@@ -32,11 +32,51 @@ class SettingsPageState extends State<SettingsPage> {
         tiles: [
           SettingsTile.navigation(
               title: getText(
-                'Aptos FullNode URL',
+                "Aptos FullNode URL",
               ),
               trailing: Container(),
               onPressed: (BuildContext context) async {
-                // TODO: Pop up alert with text box for entering alternative value.
+                bool confirmed = await showChangeStringSharedPrefDialog(context,
+                    "Aptos FullNode URL", keyAptosNodeUrl, defaultAptosNodeUrl);
+                if (confirmed) {
+                  setState(() {});
+                }
+              }),
+          SettingsTile.navigation(
+              title: getText(
+                "Jukebox address",
+              ),
+              trailing: Container(),
+              onPressed: (BuildContext context) async {
+                bool confirmed = await showChangeStringSharedPrefDialog(context,
+                    "Jukebox address", keyPublicAddress, defaultPublicAddress);
+                if (confirmed) {
+                  setState(() {});
+                }
+              }),
+          SettingsTile.navigation(
+              title: getText(
+                "Module address",
+              ),
+              trailing: Container(),
+              onPressed: (BuildContext context) async {
+                bool confirmed = await showChangeStringSharedPrefDialog(context,
+                    "Module address", keyModuleAddress, defaultModuleAddress);
+                if (confirmed) {
+                  setState(() {});
+                }
+              }),
+          SettingsTile.navigation(
+              title: getText(
+                "Module name",
+              ),
+              trailing: Container(),
+              onPressed: (BuildContext context) async {
+                bool confirmed = await showChangeStringSharedPrefDialog(
+                    context, "Module name", keyModuleName, defaultModuleName);
+                if (confirmed) {
+                  setState(() {});
+                }
               }),
         ],
         margin: margin,
@@ -98,6 +138,64 @@ Text getText(String s, {bool larger = false}) {
     textAlign: TextAlign.center,
     style: TextStyle(fontSize: size),
   );
+}
+
+Future<bool> showChangeStringSharedPrefDialog(
+    BuildContext context, String title, String key, String defaultValue,
+    {String cancelText = "Cancel", String confirmText = "Confirm"}) async {
+  bool confirmed = false;
+  String currentValue = sharedPreferences.getString(key) ?? defaultValue;
+  TextEditingController textController =
+      TextEditingController(text: currentValue);
+  // TODO allow this function to take in something that changes the type
+  // of text it is, e.g. for URL vs regular stuff.
+  TextField textField = TextField(
+    controller: textController,
+  );
+  Row content = Row(
+    children: [
+      textField,
+      Padding(padding: EdgeInsets.only(left: 10)),
+      IconButton(
+          onPressed: () {
+            textController.text = defaultValue;
+          },
+          icon: Icon(Icons.restore))
+    ],
+  );
+  Widget cancelButton = FlatButton(
+    child: Text(cancelText),
+    onPressed: () {
+      Navigator.of(context).pop();
+    },
+  );
+  Widget continueButton = FlatButton(
+    child: Text(confirmText),
+    onPressed: () async {
+      String newValue = textController.text;
+      await sharedPreferences.setString(key, newValue);
+      print("Set $key to $newValue");
+      confirmed = true;
+      Navigator.of(context).pop();
+    },
+  );
+  AlertDialog alert = AlertDialog(
+    title: Text(title),
+    // TODO: Figure out how to make this row render happily.
+    //content: Expanded(child: content),
+    content: Text("asdfdsf"),
+    actions: [
+      cancelButton,
+      continueButton,
+    ],
+  );
+  await showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return alert;
+    },
+  );
+  return confirmed;
 }
 
 class LegalInformationPage extends StatelessWidget {
