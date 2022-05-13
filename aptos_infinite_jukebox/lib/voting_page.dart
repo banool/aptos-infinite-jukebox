@@ -19,6 +19,7 @@ class VotingPageState extends State<VotingPage> {
   @override
   Widget build(BuildContext context) {
     Widget body = Container();
-    return buildTopLevelScaffold(widget.pageSelectorController, body);
+    return buildTopLevelScaffold(widget.pageSelectorController, body,
+        title: "Vote");
   }
 }

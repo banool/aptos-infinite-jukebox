@@ -12,7 +12,6 @@ import 'package:spotify_sdk/spotify_sdk.dart';
 
 import 'constants.dart';
 import 'logged_in_page.dart';
-import 'tuned_in_page.dart';
 
 class PlayerSelector extends StatefulWidget {
   const PlayerSelector({Key? key, required this.pageSelectorController})
@@ -38,13 +37,8 @@ class PlayerSelectorState extends State<PlayerSelector> {
 
           Widget page;
           if (connectionStatus.connected) {
-            if (widget.pageSelectorController.tunedIn) {
-              page = TunedInPage(
-                  pageSelectorController: widget.pageSelectorController);
-            } else {
-              page = LoggedInPage(
-                  pageSelectorController: widget.pageSelectorController);
-            }
+            page = LoggedInPage(
+                pageSelectorController: widget.pageSelectorController);
           } else {
             page = LoginPage(
                 pageSelectorController: widget.pageSelectorController);

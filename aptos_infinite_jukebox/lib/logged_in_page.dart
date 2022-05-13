@@ -145,7 +145,8 @@ class LoggedInPageState extends State<LoggedInPage> {
   @override
   Widget build(BuildContext context) {
     if (widget.pageSelectorController.tunedIn) {
-      return PlayerPage(trackAboutToStart, outOfSync, setupPlayer);
+      return PlayerPage(widget.pageSelectorController, trackAboutToStart,
+          outOfSync, setupPlayer);
     }
 
     List<Widget> children = [];
@@ -156,6 +157,7 @@ class LoggedInPageState extends State<LoggedInPage> {
       children: children,
       mainAxisAlignment: MainAxisAlignment.center,
     ));
-    return buildTopLevelScaffold(widget.pageSelectorController, body);
+    return buildTopLevelScaffold(widget.pageSelectorController, body,
+        title: "Tune in?");
   }
 }

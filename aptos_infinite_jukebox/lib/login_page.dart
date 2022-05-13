@@ -129,9 +129,16 @@ class LoginPageState extends State<LoginPage> {
       if (connectionErrorString != null) {
         connectButtonText = "Try again";
         children += [
-          Text("There was an issue connecting to spotify"),
-          Text(connectionErrorString!),
-          Padding(padding: EdgeInsets.only(top: 10)),
+          Text(
+            "There was an issue connecting to spotify:",
+            textAlign: TextAlign.center,
+          ),
+          Padding(padding: EdgeInsets.only(top: 5)),
+          Text(
+            connectionErrorString!,
+            textAlign: TextAlign.center,
+          ),
+          Padding(padding: EdgeInsets.only(top: 30)),
         ];
       } else {
         connectButtonText = "Connect to Spotify";
@@ -147,7 +154,8 @@ class LoginPageState extends State<LoginPage> {
       mainAxisAlignment: MainAxisAlignment.center,
     ));
 
-    return buildTopLevelScaffold(widget.pageSelectorController, body);
+    return buildTopLevelScaffold(widget.pageSelectorController, body,
+        title: "Login");
 
     /*
     Widget widget = StreamBuilder<ConnectionStatus>(
