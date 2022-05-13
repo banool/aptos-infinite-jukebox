@@ -19,14 +19,18 @@ RUN cargo build --release
 RUN strip target/release/driver
 
 # Make a new build stage.
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 
 # Copy in the binaries from the previous build stage.
 COPY --from=build /build/target/release/driver /bin/driver
 COPY --from=build /build/aptos /bin/aptos
 
-# TODO: Add glibc here or whatever is needed
-RUN apt-get update && apt-get install -y libssl-dev 
+# Add necessary deps
+RUN apt-get update && apt-get install -y libssl-dev ca-certificates
+
+# Add script we use for setting up the Aptos wallet config.
+COPY setup_wallet.sh .
+RUN chmod +x /setup_wallet.sh
 
 # Run the driver.
 ENTRYPOINT ["/bin/driver"]

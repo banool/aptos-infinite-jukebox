@@ -233,7 +233,7 @@ async fn trigger_vote_resolution(
     let function_id = format!("{}::{}::resolve_votes", module_address, module_name);
     let status = Command::new("aptos")
         .current_dir(aptos_cli_config_parent_directory)
-        .args(["move", "run", "--function-id", &function_id])
+        .args(["move", "run", "--max-gas", "10000", "--function-id", &function_id])
         .status()?;
     if !status.success() {
         bail!("Command failed with code {:?}", status.code(),);
