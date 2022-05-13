@@ -1,12 +1,15 @@
-name: CI
+name: Build and release web build
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  buildandroid:
+  build_web:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./aptos_infinite_jukebox
     steps:
     - uses: actions/checkout@v2
 
@@ -25,15 +28,13 @@ jobs:
     - run: flutter build web
 
     # Zip up the build
-    # TODO: Confirm zip is available
-    # TODO: See whether the below step just zips it for you
-    - run: zip -r web-release.zip build/web
+    - run: cd build/web && zip -r /tmp/web-release.zip .
 
     # Make a release with the web build
-    - uses: "marvinpinto/action-automatic-releases@latest"
+    - uses: marvinpinto/action-automatic-releases@latest
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "latest"
         prerelease: false
         title: "latest web build"
-        files: web-release.zip
+        files: /tmp/web-release.zip
