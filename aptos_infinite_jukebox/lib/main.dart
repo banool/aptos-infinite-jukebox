@@ -13,11 +13,6 @@ import 'globals.dart';
 Future<void> setup() async {
   print("Setup starting");
 
-  var widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-
-  // Preserve the splash screen while the app initializes.
-  //FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-
   onWeb = false;
   spotifyRedirectUrl =
       "https://aptos-infinite-jukebox.dport.me/auth_callback.html";
@@ -39,7 +34,6 @@ Future<void> setup() async {
 
   playbackManager = await PlaybackManager.getPlaybackManager();
 
-  //FlutterNativeSplash.remove();
   print("Setup finished");
 }
 

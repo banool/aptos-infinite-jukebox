@@ -1,7 +1,7 @@
 name: aptos_infinite_jukebox
 description: An Infinite Jukebox powered by Aptos
 
-version: 1.0.49+50
+version: 1.0.51+52
 
 environment:
   sdk: ">=2.16.2 <3.0.0"
@@ -10,7 +10,6 @@ dependencies:
   cupertino_icons: ^1.0.2
   flutter:
     sdk: flutter
-  flutter_native_splash:
   http:
   spotify_sdk:
   shared_preferences:
@@ -20,6 +19,17 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^1.0.0
+  icons_launcher: ^1.1.7
+  integration_test:
+    sdk: flutter
+  flutter_driver:
+    sdk: flutter
+
+flutter_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/icons/icon512.png"
 
 flutter:
   uses-material-design: true
