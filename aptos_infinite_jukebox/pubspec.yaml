@@ -1,7 +1,7 @@
 name: aptos_infinite_jukebox
 description: An Infinite Jukebox powered by Aptos
 
-version: 1.0.36+37
+version: 1.0.37+38
 
 environment:
   sdk: ">=2.16.2 <3.0.0"
