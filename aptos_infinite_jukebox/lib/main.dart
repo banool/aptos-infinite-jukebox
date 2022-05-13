@@ -12,6 +12,8 @@ import 'globals.dart';
 Future<void> setup() async {
   print("Setup starting");
 
+  WidgetsFlutterBinding.ensureInitialized();
+
   onWeb = false;
   spotifyRedirectUrl =
       "https://aptos-infinite-jukebox.dport.me/auth_callback.html";

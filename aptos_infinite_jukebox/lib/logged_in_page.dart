@@ -39,7 +39,7 @@ class LoggedInPageState extends State<LoggedInPage> {
 
   Future<void> tuneIn() async {
     print("Tuning in");
-    //await SpotifySdk.pause();
+    await SpotifySdk.pause();
     await setupPlayer();
     setState(() {
       widget.pageSelectorController.tunedIn = true;
@@ -95,15 +95,14 @@ class LoggedInPageState extends State<LoggedInPage> {
     List<String> tracksToQueue = await playbackManager.pull();
     for (String trackId in tracksToQueue) {
       var spotifyUri = "spotify:track:$trackId";
-      print("about to queue");
       await SpotifySdk.queue(spotifyUri: spotifyUri);
       print("Added track to queue: $spotifyUri");
     }
     await checkWhetherInSync();
   }
 
-  // TODO: The tune in and connectb uttons only trigger whne you hit the text
-  // in the middle. Fix that
+  // TODO: The tune in and connect buttons only trigger whne you hit the text
+  // in the middle. Fix that.
   // TODO: There seems to be a bug where we skip a song in the queue for some reason.
   // Particularly I think you need to tune in, let it advance to the next song,
   // then observe that it is playing the wrong song. Though on later testing
@@ -115,6 +114,9 @@ class LoggedInPageState extends State<LoggedInPage> {
   // out of sync near the end of a song, since the head will have updated but
   // we're still finishing off the previous song. If we're in the last 10 seconds
   // of the song, assume we're in sync.
+  // TODO: As it is now, the Spotify SDK cannot seem to do anything on web
+  // even with a successful login. This includes queueing, playing, getting
+  // the player state, etc.
   Future<void> setupPlayer() async {
     print("Setting up player afresh");
     // Unfortunately there is no way to clear a queue, but realistically
@@ -122,9 +124,6 @@ class LoggedInPageState extends State<LoggedInPage> {
     // Calling skipNext a bunch of times first leads to poor results.
     playbackManager.headOfRemoteQueue = null;
     playbackManager.latestConsumedTrack = null;
-    // TODO: As it is now, the Spotify SDK cannot seem to do anything on web
-    // even with a successful login. This includes queueing, playing, getting
-    // the player state, etc.
     await updateQueue();
     int playbackPosition = playbackManager.getTargetPlaybackPosition();
     print("Playback position: $playbackPosition");
