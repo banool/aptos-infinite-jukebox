@@ -1,5 +1,12 @@
 # Aptos Infinite Jukebox
 
+This project is made up of three major components:
+- `aptos_infinite_jukebox`: This is the frontend for the project, made with Flutter. Users install this on their device / open this on the web, hook it up to Spotify, and then tune in to the infinite jukebox.
+- `driver`: This runs periodically on a server to drive forward the move module. The driver checks the current song playing, determines if we're near the end of it, and if so, invokes vote resolution to determine which song to put on the queue next.
+- `move_module`: This is where the core logic lives, on the [Aptos blockchain](https://aptoslabs.com). An account owner can use this module to instantiate a jukebox. Users can then submit votes for what song plays next. Periodically the driver runs to resolve the votes. The frontend hits the REST endpoint of a fullnode to perform reads (to determine what songs to play) against the module.
+
+Each of these modules has their own README describing how to develop and deploy them.
+
 ## Setting up this repo
 When first pulling this repo, add this to `.git/hooks/pre-commit`:
 ```
@@ -8,36 +15,4 @@ When first pulling this repo, add this to `.git/hooks/pre-commit`:
 cd aptos_infinite_jukebox
 ./bump_version.sh
 git add pubspec.yaml
-```
-
-## Setting up the aptos CLI
-```
-cd ~
-aptos config init
-```
-
-## Setting up the module
-Make sure the addresses in Move.toml matches the `account` field in ~/.aptos/config.yml`.
-
-Publish the module:
-```
-cd ~
-aptos move publish --package-dir github/aptos-infinite-jukebox/move_module
-```
-
-Run the initialization function, assuming `c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd` is where the module is published:
-```
-aptos move run --function-id 'c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd::JukeboxV<latest>::initialize_jukebox' --max-gas 10000
-```
-
-You can confirm whether this worked by running
-```
-aptos move run --function-id 'c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd::Jukebox::get_current_song'
-```
-
-## Setting up the driver
-You want to run it like this every few seconds:
-```
-cd driver
-cargo run -- -d --spotify-client-id 'aaaaaaaaaaaaaaaa' --spotify-client-secret 'bbbbbbbbbbbbbbbbbb' --account-private-key cccccccc --account-public-address 'ddddddddd'
 ```
