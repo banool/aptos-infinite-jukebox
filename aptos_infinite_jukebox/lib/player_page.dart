@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:aptos_infinite_jukebox/common.dart';
+import 'package:aptos_infinite_jukebox/constants.dart';
 import 'package:aptos_infinite_jukebox/main.dart';
 import 'package:flutter/material.dart';
 import 'package:spotify_sdk/models/player_state.dart';

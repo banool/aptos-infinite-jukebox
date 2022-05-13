@@ -1,6 +1,7 @@
 import 'dart:convert';
 
-import 'package:aptos_infinite_jukebox/common.dart';
+import 'package:aptos_infinite_jukebox/constants.dart';
+import 'package:aptos_infinite_jukebox/globals.dart';
 import 'package:http/http.dart' as http;
 
 /// If the playback is more than this amount out of sync with the intentional
@@ -27,6 +28,15 @@ class PlaybackManager {
   /// queueing up new songs as they appear and we know if we're out of sync.
   Future<List<String>> pull() async {
     // TODO: Make these addresses selectable by the user.
+
+    String moduleAddress =
+        sharedPreferences.getString(keyModuleAddress) ?? defaultModuleAddress;
+    String moduleName =
+        sharedPreferences.getString(keyModuleName) ?? defaultModuleName;
+    String aptosNodeUrl =
+        sharedPreferences.getString(keyAptosNodeUrl) ?? defaultAptosNodeUrl;
+    String publicAddress =
+        sharedPreferences.getString(keyPublicAddress) ?? defaultPublicAddress;
 
     // Get the information from the account.
     var resourceType = "0x$moduleAddress::$moduleName::$moduleName";

@@ -10,7 +10,7 @@ import 'package:spotify_sdk/models/connection_status.dart';
 import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 
-import 'common.dart';
+import 'constants.dart';
 import 'logged_in_page.dart';
 import 'tuned_in_page.dart';
 

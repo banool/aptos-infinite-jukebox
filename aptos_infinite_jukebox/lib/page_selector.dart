@@ -2,7 +2,7 @@ import 'package:aptos_infinite_jukebox/player_selector.dart';
 import 'package:aptos_infinite_jukebox/voting_page.dart';
 import 'package:flutter/material.dart';
 
-import 'common.dart';
+import 'constants.dart';
 import 'settings_page.dart';
 
 class PageSelector extends StatefulWidget {
@@ -103,9 +103,14 @@ class PageSelectorState extends State<PageSelector> {
 }
 
 Scaffold buildTopLevelScaffold(PageSelectorController controller, Widget body,
-    {Widget? floatingActionButton}) {
+    {Widget? floatingActionButton, String? title}) {
+  AppBar? appBar;
+  if (title != null) {
+    appBar = AppBar(title: Text(title));
+  }
   return Scaffold(
     body: body,
+    appBar: appBar,
     floatingActionButton: floatingActionButton,
     bottomNavigationBar: BottomNavigationBar(
       items: controller.getBottomNavBarItems(),

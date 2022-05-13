@@ -7,7 +7,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 
-import 'common.dart';
+import 'constants.dart';
 import 'globals.dart';
 import 'to_delete_home_page.dart';
 

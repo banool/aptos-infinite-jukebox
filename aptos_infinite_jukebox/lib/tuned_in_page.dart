@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'common.dart';
+import 'constants.dart';
 import 'page_selector.dart';
 
 class TunedInPage extends StatefulWidget {

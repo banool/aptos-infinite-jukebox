@@ -8,7 +8,7 @@ import 'package:spotify_sdk/models/connection_status.dart';
 import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 
-import 'common.dart';
+import 'constants.dart';
 
 // TODO DELETE THIS PAGE ONCE OYU KNOW THE REFACTOR WORKS
 
