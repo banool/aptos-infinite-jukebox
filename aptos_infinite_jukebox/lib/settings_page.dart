@@ -1,6 +1,7 @@
 import 'package:aptos_infinite_jukebox/troubleshooting_help_page.dart';
 import 'package:flutter/material.dart';
 import 'package:settings_ui/settings_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'constants.dart';
 import 'globals.dart';
@@ -118,7 +119,18 @@ class SettingsPageState extends State<SettingsPage> {
                         widget.pageSelectorController),
                   ));
             },
-          )
+          ),
+          SettingsTile.navigation(
+            title: getText(
+              "View project on GitHub",
+            ),
+            trailing: Container(),
+            onPressed: (BuildContext context) async {
+              Uri uri =
+                  Uri.https("github.com", "/banool/aptos-infinite-jukebox");
+              await launchUrl(uri);
+            },
+          ),
         ],
         margin: margin,
       ),

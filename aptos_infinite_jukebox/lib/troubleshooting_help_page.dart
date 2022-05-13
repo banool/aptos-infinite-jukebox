@@ -20,13 +20,12 @@ Widget getTroubleshootingHelpPage(
               "for driving the state of the jukebox forward. For now contact the "
               "developer to figure out if this is a known ongoing issue."
         ],
-        /*
-        // Use this if we go with signing transactions right here vs through a wallet.
         "Is it safe to store my private key in this app?": [
           "It depends on your trust model. Do you trust Apple / Google? Do you "
               "trust their backup services? Do you maintain good personal security "
-              "of your phone? If not, you probably shouldn't "
+              "of your phone? Do you trust that the source code I have posted "
+              "to GitHub is the code this app is actually running? You'll have "
+              "to make the call based on how you feel about these risks. "
         ],
-        */
       });
 }
