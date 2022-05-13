@@ -30,6 +30,7 @@ class PlayerSelectorState extends State<PlayerSelector> {
         stream: SpotifySdk.subscribeConnectionStatus(),
         builder: (context, snapshot) {
           if (snapshot.data == null) {
+            print("No subscription status");
             return LoginPage(
                 pageSelectorController: widget.pageSelectorController);
           }

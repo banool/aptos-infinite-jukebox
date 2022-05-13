@@ -25,6 +25,8 @@ class LoggedInPageState extends State<LoggedInPage> {
   bool outOfSync = false;
   bool trackAboutToStart = false;
 
+  Timer? updateQueueTimer;
+
   /*
   // This is janky but I'm only subscribed to the connection status
   // in the builder, so I have to schedule this state change here.
@@ -44,7 +46,8 @@ class LoggedInPageState extends State<LoggedInPage> {
     setState(() {
       widget.pageSelectorController.tunedIn = true;
     });
-    Timer.periodic(Duration(seconds: 10), (timer) async {
+    updateQueueTimer?.cancel();
+    updateQueueTimer = Timer.periodic(Duration(seconds: 10), (timer) async {
       if (!widget.pageSelectorController.tunedIn) {
         print("Tuned out, cancelling timer");
         timer.cancel();
@@ -83,9 +86,11 @@ class LoggedInPageState extends State<LoggedInPage> {
       print("playingCorrectSong: $playingCorrectSong");
       bool inSync = withinToleranceForPlaybackPosition &&
           (playingCorrectSong || nearEndOfSong);
-      setState(() {
-        outOfSync = !inSync;
-      });
+      if (mounted) {
+        setState(() {
+          outOfSync = !inSync;
+        });
+      }
     }
   }
 

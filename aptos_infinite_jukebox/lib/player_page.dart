@@ -82,17 +82,17 @@ class _PlayerPageState extends State<PlayerPage> {
     if (includeBorder) {
       border = Border.all(color: mainColor, width: 2);
     }
-    return Container(
-        padding: EdgeInsets.all(4),
-        decoration: BoxDecoration(
-            color: backgroundColor,
-            border: border,
-            borderRadius: BorderRadius.all(Radius.circular(15))),
-        child: TextButton(
-            onPressed: onPressed,
-            style: ButtonStyle(
-              foregroundColor: MaterialStateProperty.all(foregroundColor),
-            ),
+    return TextButton(
+        onPressed: onPressed,
+        style: ButtonStyle(
+          foregroundColor: MaterialStateProperty.all(foregroundColor),
+        ),
+        child: Container(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+                color: backgroundColor,
+                border: border,
+                borderRadius: BorderRadius.all(Radius.circular(10))),
             child: Text(
               text,
               style: TextStyle(fontSize: 16),
@@ -172,6 +172,7 @@ class _PlayerPageState extends State<PlayerPage> {
             children.add(Text(
               "If resyncing doesn't seem to work, it is likely because you already have something in your Spotify queue. The Spotify SDK offers no way to clear it, so you must go clear the queue yourself and then try to resync.",
               textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12),
             ));
           }
 
