@@ -48,7 +48,7 @@ class LoginPageState extends State<LoginPage> {
     setState(() {
       connectionErrorString = "$error";
       connectingInformation = null;
-      widget.pageSelectorController.tunedIn = false;
+      widget.pageSelectorController.tunedInState = TunedInState.tunedOut;
     });
   }
 

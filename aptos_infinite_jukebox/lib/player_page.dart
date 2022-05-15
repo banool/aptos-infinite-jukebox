@@ -12,13 +12,10 @@ import 'package:spotify_sdk/spotify_sdk.dart';
 const ImageDimension desiredImageDimension = ImageDimension.large;
 
 class PlayerPage extends StatefulWidget {
-  const PlayerPage(
-      this.pageSelectorController, this.outOfSync, this.setupPlayer,
-      {Key? key})
+  const PlayerPage(this.pageSelectorController, this.setupPlayer, {Key? key})
       : super(key: key);
 
   final PageSelectorController pageSelectorController;
-  final bool outOfSync;
 
   // The player needs this to invoke a resync with the intended player state.
   final Function setupPlayer;
@@ -140,7 +137,7 @@ class _PlayerPageState extends State<PlayerPage> {
               textAlign: TextAlign.center,
             ),
             Padding(padding: EdgeInsets.only(top: 30)),
-            getSpotifyImageWidget(),
+            Expanded(child: getSpotifyImageWidget()),
             Padding(padding: EdgeInsets.only(top: 30)),
             PlaybackIndicator(
               initialPosition: playerState.playbackPosition,
@@ -151,7 +148,7 @@ class _PlayerPageState extends State<PlayerPage> {
           ];
 
           Widget syncButton;
-          if (widget.outOfSync) {
+          if (widget.pageSelectorController.outOfSync) {
             syncButton =
                 getSyncButton("Out of sync, sync up?", Colors.white, Colors.red,
                     onPressed: () async {
@@ -167,10 +164,10 @@ class _PlayerPageState extends State<PlayerPage> {
           children.add(Padding(padding: EdgeInsets.only(top: 20)));
           children.add(syncButton);
 
-          if (widget.outOfSync) {
+          if (widget.pageSelectorController.outOfSync) {
             children.add(Padding(padding: EdgeInsets.only(top: 20)));
             children.add(Text(
-              "If resyncing doesn't seem to work, it is likely because you already have something in your Spotify queue. The Spotify SDK offers no way to clear it, so you must go clear the queue yourself and then try to resync.",
+              "If resyncing doesn't seem to work, check out the FAQ under the Settings tab for tips on resolving common issues.",
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12),
             ));

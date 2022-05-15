@@ -19,6 +19,12 @@ class TabInformation {
   TabInformation(this.bottomNavBarItem, this.tabBody);
 }
 
+enum TunedInState {
+  tunedOut,
+  tuningIn,
+  tunedIn,
+}
+
 // This class contains information that only makes sense to be stored
 // above each tab. This includes stuff that needs to remembered between
 // each tab, since they lose their state when tabbing between each.
@@ -30,7 +36,8 @@ class PageSelectorController {
   late int currentNavBarIndex;
   late List<TabInformation> tabs;
   late void Function() refresh;
-  bool tunedIn = false;
+  TunedInState tunedInState = TunedInState.tunedOut;
+  bool outOfSync = false;
 
   void onNavBarItemTapped(int index) {
     currentNavBarIndex = index;
@@ -107,7 +114,10 @@ Scaffold buildTopLevelScaffold(PageSelectorController controller, Widget body,
     {Widget? floatingActionButton, String? title}) {
   AppBar? appBar;
   if (title != null) {
-    appBar = AppBar(title: Text(title));
+    appBar = AppBar(
+      title: Text(title),
+      centerTitle: true,
+    );
   }
   return Scaffold(
     body: body,

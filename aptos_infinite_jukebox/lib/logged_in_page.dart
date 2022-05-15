@@ -5,7 +5,6 @@ import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 
 import 'common.dart';
-import 'constants.dart';
 import 'globals.dart';
 import 'page_selector.dart';
 import 'playback_manager.dart';
@@ -22,7 +21,6 @@ class LoggedInPage extends StatefulWidget {
 }
 
 class LoggedInPageState extends State<LoggedInPage> {
-  bool outOfSync = false;
   bool trackAboutToStart = false;
 
   Timer? updateQueueTimer;
@@ -41,21 +39,30 @@ class LoggedInPageState extends State<LoggedInPage> {
 
   Future<void> tuneIn() async {
     print("Tuning in");
-    await SpotifySdk.pause();
-    await setupPlayer();
     setState(() {
-      widget.pageSelectorController.tunedIn = true;
+      widget.pageSelectorController.tunedInState = TunedInState.tuningIn;
     });
-    updateQueueTimer?.cancel();
-    updateQueueTimer = Timer.periodic(Duration(seconds: 10), (timer) async {
-      if (!widget.pageSelectorController.tunedIn) {
-        print("Tuned out, cancelling timer");
-        timer.cancel();
-        return;
-      }
-      print("Checking for queue / playback updates");
-      await updateQueue();
-    });
+    try {
+      await setupPlayer();
+      setState(() {
+        widget.pageSelectorController.tunedInState = TunedInState.tunedIn;
+      });
+      updateQueueTimer?.cancel();
+      updateQueueTimer = Timer.periodic(Duration(seconds: 10), (timer) async {
+        if (widget.pageSelectorController.tunedInState ==
+            TunedInState.tunedOut) {
+          print("Tuned out, cancelling timer");
+          timer.cancel();
+          return;
+        }
+        print("Checking for queue / playback updates");
+        await updateQueue();
+      });
+    } catch (e) {
+      setState(() {
+        widget.pageSelectorController.tunedInState = TunedInState.tunedOut;
+      });
+    }
   }
 
   Future<void> checkWhetherInSync() async {
@@ -86,11 +93,9 @@ class LoggedInPageState extends State<LoggedInPage> {
       print("playingCorrectSong: $playingCorrectSong");
       bool inSync = withinToleranceForPlaybackPosition &&
           (playingCorrectSong || nearEndOfSong);
-      if (mounted) {
-        setState(() {
-          outOfSync = !inSync;
-        });
-      }
+      setState(() {
+        widget.pageSelectorController.outOfSync = !inSync;
+      });
     }
   }
 
@@ -106,8 +111,36 @@ class LoggedInPageState extends State<LoggedInPage> {
     await checkWhetherInSync();
   }
 
-  // TODO: The tune in and connect buttons only trigger whne you hit the text
-  // in the middle. Fix that.
+  // This is a very janky way of clearing the queue, since the Spotify SDK
+  // doesn't offer a native way to do it. This leaves the dummy track playing,
+  // which needs to be cleared aferward once we queue up the intended tracks.
+  Future<void> clearQueue() async {
+    // Queue up a track.
+    print("Adding dummy track");
+    String uri = "spotify:track:6SlMg75ULODezMcXt41Prv";
+    await SpotifySdk.queue(spotifyUri: uri);
+    await SpotifySdk.skipNext();
+
+    // Skip tracks until we see the track we queued up, which tells us we're at
+    // the end of the queue.
+    print("Skipping track until we see the dummy track");
+    while (true) {
+      var playerState = await SpotifySdk.getPlayerState();
+      if (playerState == null || playerState.track == null) {
+        print("Waiting for Spotify to report a track playing");
+        await Future.delayed(Duration(milliseconds: 50));
+        continue;
+      }
+      if (playerState.track!.uri == uri) {
+        print("Queue cleared, leaving dummy track playing");
+        break;
+      }
+      print("Skipping track");
+      await SpotifySdk.skipNext();
+      await Future.delayed(Duration(milliseconds: 50));
+    }
+  }
+
   // TODO: There seems to be a bug where we skip a song in the queue for some reason.
   // Particularly I think you need to tune in, let it advance to the next song,
   // then observe that it is playing the wrong song. Though on later testing
@@ -115,30 +148,40 @@ class LoggedInPageState extends State<LoggedInPage> {
   // TODO: Over time we expect some sync drift. Be a little smarter about resyncing
   // if the user requests it, where instead of adding everything to queue, we
   // just seek to correct location if the correct song is playing.
-  // TODO: With the way the voting works, the player will often say it is
-  // out of sync near the end of a song, since the head will have updated but
-  // we're still finishing off the previous song. If we're in the last 10 seconds
-  // of the song, assume we're in sync.
   // TODO: As it is now, the Spotify SDK cannot seem to do anything on web
   // even with a successful login. This includes queueing, playing, getting
   // the player state, etc.
+  // TODO: The periodic updateQueue only works if the app is foregrounded.
   Future<void> setupPlayer() async {
     print("Setting up player afresh");
-    // Unfortunately there is no way to clear a queue, but realistically
-    // we need a way to do this here, otherwise it's going to get all fucky.
-    // Calling skipNext a bunch of times first leads to poor results.
     playbackManager.headOfRemoteQueue = null;
     playbackManager.latestConsumedTrack = null;
+
+    // Clear the queue, leaving the dummy track playing. Pause if necessary.
+    await clearQueue();
+    try {
+      await SpotifySdk.pause();
+      // ignore: empty_catches
+    } catch (e) {}
+
+    // Add the intended songs onto the queue.
     await updateQueue();
+
+    // Determine whether to tell the user we're waiting for the song to start
+    // or whether to play the song now, skipping to the intended position.
     int playbackPosition = playbackManager.getTargetPlaybackPosition();
     print("Playback position: $playbackPosition");
     if (playbackPosition > 0) {
-      // We should already be playing the track, start playing it.
+      // Skip the dummy track.
       await SpotifySdk.skipNext();
+
+      // Skip to the correct position in the track.
       await SpotifySdk.seekTo(positionedMilliseconds: playbackPosition);
-      //await playTrack(playbackManager.targetTrackId,
-      //   playbackPosition: playbackPosition);
+
+      // Confirm our sync status, which will invoke a UI re-render to display
+      // said status to the user.
       await checkWhetherInSync();
+
       print("Set up player midway through song");
     } else {
       // The track will start soon. Schedule it for then.
@@ -146,11 +189,17 @@ class LoggedInPageState extends State<LoggedInPage> {
         trackAboutToStart = true;
       });
       Future.delayed(Duration(milliseconds: -playbackPosition), () async {
+        // Skip the dummy track.
         await SpotifySdk.skipNext();
+
         setState(() {
           trackAboutToStart = false;
         });
+
+        // Confirm our sync status, which will invoke a UI re-render to display
+        // said status to the user.
         await checkWhetherInSync();
+
         print("Set up player after waiting for song to start");
       });
     }
@@ -166,12 +215,17 @@ class LoggedInPageState extends State<LoggedInPage> {
           title: "Tuning in...");
     }
 
-    if (widget.pageSelectorController.tunedIn) {
-      return PlayerPage(widget.pageSelectorController, outOfSync, setupPlayer);
-    }
-
     List<Widget> children = [];
-    children += [getConnectionButton("Tune in!", tuneIn)];
+    switch (widget.pageSelectorController.tunedInState) {
+      case TunedInState.tunedOut:
+        children += [getConnectionButton("Tune in!", tuneIn)];
+        break;
+      case TunedInState.tuningIn:
+        children += [Text("Tuning in...")];
+        break;
+      case TunedInState.tunedIn:
+        return PlayerPage(widget.pageSelectorController, setupPlayer);
+    }
 
     Widget body = Center(
         child: Column(

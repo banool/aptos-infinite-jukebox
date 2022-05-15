@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 const String appTitle = "Aptos Infinite Jukebox";
 
-const Color mainColor = Colors.teal;
 const Color spotifyGreen = Color.fromRGBO(101, 212, 110, 1.0);
+const Color mainColor = Colors.indigo;
 
 const String spotifyClientId = "e02b0452a18948a9a963b35bd4a4f743";
 late String spotifyRedirectUrl;
