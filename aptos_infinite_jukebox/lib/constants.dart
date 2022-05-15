@@ -18,7 +18,7 @@ const String defaultPublicAddress =
     "c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd";
 const String defaultModuleAddress =
     "c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd";
-const String defaultModuleName = "JukeboxV7";
+const String defaultModuleName = "JukeboxV8";
 
 // Shared preferences defaults.
 const String keyAptosNodeUrl = "keyAptosNodeUrl";
