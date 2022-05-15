@@ -24,3 +24,9 @@ You can confirm whether this worked by running
 ```
 aptos move run --function-id 'c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd::JukeboxV<latest>::get_current_song'
 ```
+
+## Voting
+To vote with just the CLI, try something like this:
+```
+aptos move run --function-id c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd::JukeboxV<latest>::vote  --max-gas 10000 --args address:c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd --args string:2GCZDNEHjBeTSr99hurnaf
+```
