@@ -20,6 +20,16 @@ Widget getTroubleshootingHelpPage(
               "for driving the state of the jukebox forward. For now contact the "
               "developer to figure out if this is a known ongoing issue."
         ],
+        "What do I do if voting doesn't work?": [
+          "Make sure your account is topped up. We're in the devnet / testnet "
+              "phase right now, so use another wallet to hit the faucet a few "
+              "times. ",
+          "Make sure you're entering a Spotify song link / track ID. You can "
+              "get this from going to Spotify, right clicking / tapping on the 3 "
+              "dots for a song, and hitting \"Copy Song Link\"",
+          "Please don't put in an invalid song link because we can't handle "
+              "it right now lol."
+        ],
         "Is it safe to store my private key in this app?": [
           "It depends on your trust model. Do you trust Apple / Google? Do you "
               "trust their backup services? Do you maintain good personal security "
