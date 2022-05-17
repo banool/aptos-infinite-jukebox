@@ -80,6 +80,18 @@ class SettingsPageState extends State<SettingsPage> {
                   setState(() {});
                 }
               }),
+          SettingsTile.navigation(
+              title: getText(
+                "Aptos account private key",
+              ),
+              trailing: Container(),
+              onPressed: (BuildContext context) async {
+                bool confirmed = await showChangeStringSharedPrefDialog(
+                    context, "Private key", keyPrivateKey, defaultPrivateKey);
+                if (confirmed) {
+                  setState(() {});
+                }
+              }),
         ],
         margin: margin,
       ),
@@ -162,10 +174,10 @@ Text getText(String s, {bool larger = false}) {
 }
 
 Future<bool> showChangeStringSharedPrefDialog(
-    BuildContext context, String title, String key, String defaultValue,
+    BuildContext context, String title, String key, String? defaultValue,
     {String cancelText = "Cancel", String confirmText = "Confirm"}) async {
   bool confirmed = false;
-  String currentValue = sharedPreferences.getString(key) ?? defaultValue;
+  String currentValue = sharedPreferences.getString(key) ?? defaultValue ?? "";
   TextEditingController textController =
       TextEditingController(text: currentValue);
   // TODO allow this function to take in something that changes the type
@@ -185,9 +197,13 @@ Future<bool> showChangeStringSharedPrefDialog(
     child: Text(confirmText),
     onPressed: () async {
       String newValue = textController.text;
-      await sharedPreferences.setString(key, newValue);
-      print("Set $key to $newValue");
-      confirmed = true;
+      if (newValue == "") {
+        print("Not setting empty string for $key");
+      } else {
+        await sharedPreferences.setString(key, newValue);
+        print("Set $key to $newValue");
+        confirmed = true;
+      }
       Navigator.of(context).pop();
     },
   );
@@ -197,7 +213,7 @@ Future<bool> showChangeStringSharedPrefDialog(
       Spacer(),
       IconButton(
           onPressed: () {
-            textController.text = defaultValue;
+            textController.text = defaultValue ?? "";
           },
           icon: Icon(Icons.restore))
     ]),
