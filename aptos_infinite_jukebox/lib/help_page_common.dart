@@ -48,6 +48,7 @@ class HelpPage extends StatelessWidget {
     }
 
     Widget body = ListView(children: tiles);
-    return buildTopLevelScaffold(pageSelectorController, body, title: title);
+    return buildTopLevelScaffold(pageSelectorController, body,
+        title: title, isSubPage: true);
   }
 }

@@ -115,7 +115,7 @@ class PageSelectorState extends State<PageSelector> {
 
 // TODO: On web, show a sidebar down the left instead of a bottom tab bar.
 Scaffold buildTopLevelScaffold(PageSelectorController controller, Widget body,
-    {Widget? floatingActionButton, String? title}) {
+    {Widget? floatingActionButton, String? title, bool isSubPage = false}) {
   AppBar? appBar;
   if (title != null) {
     appBar = AppBar(
@@ -123,16 +123,20 @@ Scaffold buildTopLevelScaffold(PageSelectorController controller, Widget body,
       centerTitle: true,
     );
   }
-  return Scaffold(
-    body: body,
-    appBar: appBar,
-    floatingActionButton: floatingActionButton,
-    bottomNavigationBar: BottomNavigationBar(
+  BottomNavigationBar? bottomNavigationBar;
+  if (!isSubPage) {
+    bottomNavigationBar = BottomNavigationBar(
       items: controller.getBottomNavBarItems(),
       currentIndex: controller.currentNavBarIndex,
       selectedItemColor: spotifyGreen,
       onTap: controller.onNavBarItemTapped,
       type: BottomNavigationBarType.fixed,
-    ),
+    );
+  }
+  return Scaffold(
+    body: body,
+    appBar: appBar,
+    floatingActionButton: floatingActionButton,
+    bottomNavigationBar: bottomNavigationBar,
   );
 }
