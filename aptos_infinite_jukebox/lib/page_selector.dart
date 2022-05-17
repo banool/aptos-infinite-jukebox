@@ -37,7 +37,11 @@ class PageSelectorController {
   late List<TabInformation> tabs;
   late void Function() refresh;
   TunedInState tunedInState = TunedInState.tunedOut;
-  bool outOfSync = false;
+
+  void goToSettings() {
+    currentNavBarIndex = 2;
+    refresh();
+  }
 
   void onNavBarItemTapped(int index) {
     currentNavBarIndex = index;
