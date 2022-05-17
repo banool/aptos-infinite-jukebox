@@ -19,8 +19,6 @@ class LoginPage extends StatefulWidget {
 }
 
 class LoginPageState extends State<LoginPage> {
-  String? connectionErrorString;
-
   late Future<void> initStateAsyncFuture;
 
   // This will be set if we're connecting.
@@ -46,10 +44,17 @@ class LoginPageState extends State<LoginPage> {
   Future<void> handleConnectionError(Object error) async {
     await sharedPreferences.remove(keySpotifyAccessToken);
     setState(() {
-      connectionErrorString = "$error";
       connectingInformation = null;
       widget.pageSelectorController.tunedInState = TunedInState.tunedOut;
     });
+    await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Error connecting to Spotify"),
+            content: Text("$error"),
+          );
+        });
   }
 
   String? getScope() {
@@ -66,7 +71,6 @@ class LoginPageState extends State<LoginPage> {
       print("Getting new access token");
       setState(() {
         connectingInformation = "Getting new access token";
-        connectionErrorString = null;
       });
       String accessToken = await SpotifySdk.getAccessToken(
         clientId: spotifyClientId,
@@ -92,7 +96,6 @@ class LoginPageState extends State<LoginPage> {
       print("Trying to connect to Spotify");
       setState(() {
         connectingInformation = "Connecting to Spotify";
-        connectionErrorString = null;
       });
       await SpotifySdk.connectToSpotifyRemote(
         clientId: spotifyClientId,
@@ -105,7 +108,6 @@ class LoginPageState extends State<LoginPage> {
       if (mounted) {
         setState(() {
           connectingInformation = null;
-          connectionErrorString = null;
         });
       }
       print("Successfully connected to Spotify");
@@ -117,10 +119,6 @@ class LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (connectingInformation != null && connectionErrorString != null) {
-      throw "This here shouldn't be possible";
-    }
-
     List<Widget> children = [];
     if (connectingInformation != null) {
       children += [
@@ -129,24 +127,7 @@ class LoginPageState extends State<LoginPage> {
         CircularProgressIndicator(),
       ];
     } else {
-      String connectButtonText;
-      if (connectionErrorString != null) {
-        connectButtonText = "Try again";
-        children += [
-          Text(
-            "There was an issue connecting to spotify:",
-            textAlign: TextAlign.center,
-          ),
-          Padding(padding: EdgeInsets.only(top: 5)),
-          Text(
-            connectionErrorString!,
-            textAlign: TextAlign.center,
-          ),
-          Padding(padding: EdgeInsets.only(top: 30)),
-        ];
-      } else {
-        connectButtonText = "Connect to Spotify";
-      }
+      String connectButtonText = "Connect to Spotify";
       children += [
         getConnectionButton(connectButtonText, getAccessTokenAndConnect)
       ];
