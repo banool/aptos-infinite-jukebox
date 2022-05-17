@@ -13,15 +13,18 @@ const String spotifyAccessTokenScope =
 
 // Shared preferences keys.
 const String keySpotifyAccessToken = "keySpotifyAccessToken";
+const String keyAptosNodeUrl = "keyAptosNodeUrl";
+const String keyPublicAddress = "keyPublicAddress";
+const String keyModuleAddress = "keyModuleAddress";
+const String keyModuleName = "keyModuleName";
+const String keyPrivateKey = "keyPrivateKey";
+const String keyVotesTableHandle = "keyVotesTableHandle";
+
+// Shared preferences defaults.
 const String defaultAptosNodeUrl = "https://fullnode.devnet.aptoslabs.com";
 const String defaultPublicAddress =
     "c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd";
 const String defaultModuleAddress =
     "c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd";
 const String defaultModuleName = "JukeboxV8";
-
-// Shared preferences defaults.
-const String keyAptosNodeUrl = "keyAptosNodeUrl";
-const String keyPublicAddress = "keyPublicAddress";
-const String keyModuleAddress = "keyModuleAddress";
-const String keyModuleName = "keyModuleName";
+const String? defaultPrivateKey = null;
