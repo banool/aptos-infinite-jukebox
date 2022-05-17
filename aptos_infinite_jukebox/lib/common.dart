@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'constants.dart';
+import 'globals.dart';
 
 Widget getConnectionButton(String text, void Function() onPressed) {
   Border? border;
@@ -19,4 +20,13 @@ Widget getConnectionButton(String text, void Function() onPressed) {
             text,
             style: TextStyle(fontSize: 18),
           )));
+}
+
+String buildResourceType({String? structName}) {
+  String moduleAddress =
+      sharedPreferences.getString(keyModuleAddress) ?? defaultModuleAddress;
+  String moduleName =
+      sharedPreferences.getString(keyModuleName) ?? defaultModuleName;
+
+  return "0x$moduleAddress::$moduleName::${structName ?? moduleName}";
 }
