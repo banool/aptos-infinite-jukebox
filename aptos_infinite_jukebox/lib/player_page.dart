@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:aptos_infinite_jukebox/constants.dart';
+import 'package:aptos_infinite_jukebox/globals.dart';
 import 'package:aptos_infinite_jukebox/page_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:spotify_sdk/models/player_state.dart';
@@ -148,7 +149,7 @@ class _PlayerPageState extends State<PlayerPage> {
           ];
 
           Widget syncButton;
-          if (widget.pageSelectorController.outOfSync) {
+          if (playbackManager.outOfSync) {
             syncButton =
                 getSyncButton("Out of sync, sync up?", Colors.white, Colors.red,
                     onPressed: () async {
@@ -164,7 +165,7 @@ class _PlayerPageState extends State<PlayerPage> {
           children.add(Padding(padding: EdgeInsets.only(top: 20)));
           children.add(syncButton);
 
-          if (widget.pageSelectorController.outOfSync) {
+          if (playbackManager.outOfSync) {
             children.add(Padding(padding: EdgeInsets.only(top: 20)));
             children.add(Text(
               "If resyncing doesn't seem to work, check out the FAQ under the Settings tab for tips on resolving common issues.",

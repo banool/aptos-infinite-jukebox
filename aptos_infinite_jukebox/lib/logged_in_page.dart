@@ -66,7 +66,13 @@ class LoggedInPageState extends State<LoggedInPage> {
   }
 
   Future<void> checkWhetherInSync() async {
-    PlayerState? playerState = await SpotifySdk.getPlayerState();
+    PlayerState? playerState;
+    try {
+      playerState = await SpotifySdk.getPlayerState();
+    } catch (e) {
+      print("Failed to get player state when checking sync state: $e");
+      return;
+    }
     if (playerState != null) {
       // With the way the voting works, the player will somtimes say it is
       // out of sync near the end of a song, since the head will have updated
@@ -93,8 +99,11 @@ class LoggedInPageState extends State<LoggedInPage> {
       print("playingCorrectSong: $playingCorrectSong");
       bool inSync = withinToleranceForPlaybackPosition &&
           (playingCorrectSong || nearEndOfSong);
+      if (!mounted) {
+        return;
+      }
       setState(() {
-        widget.pageSelectorController.outOfSync = !inSync;
+        playbackManager.outOfSync = !inSync;
       });
     }
   }
@@ -117,7 +126,7 @@ class LoggedInPageState extends State<LoggedInPage> {
   Future<void> clearQueue() async {
     // Queue up a track.
     print("Adding dummy track");
-    String uri = "spotify:track:6SlMg75ULODezMcXt41Prv";
+    String uri = "spotify:track:7p5bQJB4XsZJEEn6Tb7EaL";
     await SpotifySdk.queue(spotifyUri: uri);
     await SpotifySdk.skipNext();
 
