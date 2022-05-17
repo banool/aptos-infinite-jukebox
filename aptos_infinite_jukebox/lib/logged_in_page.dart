@@ -77,11 +77,11 @@ class LoggedInPageState extends State<LoggedInPage> {
       // With the way the voting works, the player will somtimes say it is
       // out of sync near the end of a song, since the head will have updated
       // but we're still finishing off the previous song. If we're in the last
-      // 10 seconds of the song, we just assume we're in sync.
+      // x seconds of the song, we just assume we're in sync.
       bool nearEndOfSong = false;
       if (playerState.track != null) {
         nearEndOfSong =
-            playerState.track!.duration - playerState.playbackPosition < 10000;
+            playerState.track!.duration - playerState.playbackPosition < 20000;
       }
       bool withinToleranceForPlaybackPosition =
           (playbackManager.getTargetPlaybackPosition() -

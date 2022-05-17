@@ -13,7 +13,7 @@ import 'common.dart';
 /// If the playback is more than this amount out of sync with the intentional
 /// playback position, we consider it to be out of sync and offer the user
 /// a button that they can press to resync.
-const int outOfSyncThresholdMilli = 2000000;
+const int outOfSyncThresholdMilli = 5000;
 
 class PlaybackManager extends ChangeNotifier {
   String? latestConsumedTrack;
