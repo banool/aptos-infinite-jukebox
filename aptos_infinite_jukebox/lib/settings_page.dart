@@ -25,8 +25,9 @@ class SettingsPageState extends State<SettingsPage> {
     EdgeInsetsDirectional margin =
         EdgeInsetsDirectional.only(start: 15, end: 15, top: 10, bottom: 10);
 
-    // TODO In the alerts for the text boxes, offer a reset option that sets
-    // the value back to its default.
+    Future<void> clearCachedTableHandle() async {
+      await sharedPreferences.remove(keyVotesTableHandle);
+    }
 
     List<AbstractSettingsSection?> sections = [
       SettingsSection(
@@ -41,6 +42,7 @@ class SettingsPageState extends State<SettingsPage> {
                 bool confirmed = await showChangeStringSharedPrefDialog(context,
                     "Aptos FullNode URL", keyAptosNodeUrl, defaultAptosNodeUrl);
                 if (confirmed) {
+                  await clearCachedTableHandle();
                   setState(() {});
                 }
               }),
@@ -53,6 +55,7 @@ class SettingsPageState extends State<SettingsPage> {
                 bool confirmed = await showChangeStringSharedPrefDialog(context,
                     "Jukebox address", keyPublicAddress, defaultPublicAddress);
                 if (confirmed) {
+                  await clearCachedTableHandle();
                   setState(() {});
                 }
               }),
@@ -65,6 +68,7 @@ class SettingsPageState extends State<SettingsPage> {
                 bool confirmed = await showChangeStringSharedPrefDialog(context,
                     "Module address", keyModuleAddress, defaultModuleAddress);
                 if (confirmed) {
+                  await clearCachedTableHandle();
                   setState(() {});
                 }
               }),
@@ -77,6 +81,7 @@ class SettingsPageState extends State<SettingsPage> {
                 bool confirmed = await showChangeStringSharedPrefDialog(
                     context, "Module name", keyModuleName, defaultModuleName);
                 if (confirmed) {
+                  await clearCachedTableHandle();
                   setState(() {});
                 }
               }),
