@@ -1,7 +1,7 @@
 name: aptos_infinite_jukebox
 description: An Infinite Jukebox powered by Aptos
 
-version: 1.0.72+73
+version: 1.0.73+74
 
 environment:
   sdk: ">=2.16.2 <3.0.0"
@@ -15,6 +15,7 @@ dependencies:
   shared_preferences:
   settings_ui:
   url_launcher:
+  aptos_sdk_dart:
 
 dev_dependencies:
   flutter_test:

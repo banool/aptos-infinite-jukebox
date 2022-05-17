@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:aptos_infinite_jukebox/constants.dart';
 import 'package:aptos_infinite_jukebox/globals.dart';
+import 'package:aptos_sdk_dart/aptos_client_helper.dart';
+import 'package:aptos_sdk_dart/aptos_sdk_dart.dart';
 import 'package:http/http.dart' as http;
 
 // TODO: I really want to be using Events here I believe.
@@ -15,6 +17,7 @@ class PlaybackManager {
   String? latestConsumedTrack;
   String? headOfRemoteQueue;
   DateTime targetTrackStartMilli;
+  bool outOfSync = false;
 
   PlaybackManager(this.latestConsumedTrack, this.headOfRemoteQueue,
       this.targetTrackStartMilli);
@@ -38,15 +41,27 @@ class PlaybackManager {
     String publicAddress =
         sharedPreferences.getString(keyPublicAddress) ?? defaultPublicAddress;
 
-    // Get the information from the account.
     var resourceType = "0x$moduleAddress::$moduleName::$moduleName";
-    var uri = "$aptosNodeUrl/accounts/$publicAddress/resource/$resourceType";
-    var response = await http.get(Uri.parse(uri));
-    if (response.statusCode != 200) {
-      throw "Failed to pull info";
+
+    print("Getting latest queue from blockchain");
+
+    // Get the information from the account.
+    AptosClientHelper aptosClientHelper =
+        AptosClientHelper.fromBaseUrl(aptosNodeUrl);
+    AccountResource resource;
+    try {
+      resource = await AptosClientHelper.unwrapClientCall(
+          aptosClientHelper.client.getAccountsApi().getAccountResource(
+              address: publicAddress, resourceType: resourceType));
+    } catch (e) {
+      print("Failed to pull resource from blockchain: $e");
+      return [];
     }
-    var d = jsonDecode(response.body);
-    var inner = d["data"]["inner"];
+
+    print("Resource: $resource");
+
+    // Process info from the resources.
+    var inner = resource.data.asMap["inner"];
 
     // Update the target track start time.
     targetTrackStartMilli = DateTime.fromMillisecondsSinceEpoch(
