@@ -40,6 +40,12 @@ class _PlayerPageState extends State<PlayerPage> {
   @override
   void initState() {
     super.initState();
+    playbackManager.addListener(() {
+      print("Rebuilding because outOfSync changed");
+      if (mounted) {
+        setState(() {});
+      }
+    });
     initStateAsyncFuture = initStateAsync();
   }
 
@@ -104,13 +110,17 @@ class _PlayerPageState extends State<PlayerPage> {
         stream: SpotifySdk.subscribePlayerState(),
         builder: (context, snapshot) {
           if (snapshot.data == null) {
-            return CircularProgressIndicator();
+            return buildTopLevelScaffold(
+                widget.pageSelectorController, CircularProgressIndicator(),
+                title: "Tuning in...");
           }
           PlayerState playerState = snapshot.data!;
 
           if (playerState.track == null) {
             // Just defensive, we should never hit this state.
-            return CircularProgressIndicator();
+            return buildTopLevelScaffold(
+                widget.pageSelectorController, CircularProgressIndicator(),
+                title: "Tuning in...");
           }
 
           Track track = playerState.track!;

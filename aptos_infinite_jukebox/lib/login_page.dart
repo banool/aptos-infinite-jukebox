@@ -50,6 +50,9 @@ class LoginPageState extends State<LoginPage> {
     await showDialog(
         context: context,
         builder: (BuildContext context) {
+          Future.delayed(Duration(seconds: 5), () {
+            Navigator.of(context).pop(true);
+          });
           return AlertDialog(
             title: Text("Error connecting to Spotify"),
             content: Text("$error"),

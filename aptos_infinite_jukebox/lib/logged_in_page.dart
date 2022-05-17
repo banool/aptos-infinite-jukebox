@@ -99,12 +99,7 @@ class LoggedInPageState extends State<LoggedInPage> {
       print("playingCorrectSong: $playingCorrectSong");
       bool inSync = withinToleranceForPlaybackPosition &&
           (playingCorrectSong || nearEndOfSong);
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        playbackManager.outOfSync = !inSync;
-      });
+      playbackManager.setOutOfSync(!inSync);
     }
   }
 

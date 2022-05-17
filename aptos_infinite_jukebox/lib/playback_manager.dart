@@ -4,6 +4,7 @@ import 'package:aptos_infinite_jukebox/constants.dart';
 import 'package:aptos_infinite_jukebox/globals.dart';
 import 'package:aptos_sdk_dart/aptos_client_helper.dart';
 import 'package:aptos_sdk_dart/aptos_sdk_dart.dart';
+import 'package:flutter/material.dart';
 
 import 'common.dart';
 
@@ -14,11 +15,11 @@ import 'common.dart';
 /// a button that they can press to resync.
 const int outOfSyncThresholdMilli = 2000000;
 
-class PlaybackManager {
+class PlaybackManager extends ChangeNotifier {
   String? latestConsumedTrack;
   String? headOfRemoteQueue;
   DateTime targetTrackStartMilli;
-  bool outOfSync = false;
+  bool _outOfSync = false;
 
   PlaybackManager(this.latestConsumedTrack, this.headOfRemoteQueue,
       this.targetTrackStartMilli);
@@ -27,6 +28,16 @@ class PlaybackManager {
     var playbackManager =
         PlaybackManager(null, null, DateTime.fromMillisecondsSinceEpoch(0));
     return playbackManager;
+  }
+
+  bool get outOfSync => _outOfSync;
+
+  void setOutOfSync(bool outOfSync) {
+    bool old = _outOfSync;
+    _outOfSync = outOfSync;
+    if (outOfSync != old) {
+      notifyListeners();
+    }
   }
 
   /// Call this periodically, much more frequently than the frequency of
