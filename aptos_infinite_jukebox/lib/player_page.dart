@@ -110,17 +110,19 @@ class _PlayerPageState extends State<PlayerPage> {
         stream: SpotifySdk.subscribePlayerState(),
         builder: (context, snapshot) {
           if (snapshot.data == null) {
-            return buildTopLevelScaffold(
-                widget.pageSelectorController, CircularProgressIndicator(),
-                title: "Tuning in...");
+            return Padding(
+              padding: EdgeInsets.all(30),
+              child: CircularProgressIndicator(),
+            );
           }
           PlayerState playerState = snapshot.data!;
 
           if (playerState.track == null) {
             // Just defensive, we should never hit this state.
-            return buildTopLevelScaffold(
-                widget.pageSelectorController, CircularProgressIndicator(),
-                title: "Tuning in...");
+            return Padding(
+              padding: EdgeInsets.all(30),
+              child: CircularProgressIndicator(),
+            );
           }
 
           Track track = playerState.track!;
@@ -147,7 +149,7 @@ class _PlayerPageState extends State<PlayerPage> {
               style: TextStyle(fontSize: 20),
               textAlign: TextAlign.center,
             ),
-            Padding(padding: EdgeInsets.only(top: 30)),
+            Padding(padding: EdgeInsets.only(top: 15)),
             Expanded(child: getSpotifyImageWidget()),
             Padding(padding: EdgeInsets.only(top: 30)),
             PlaybackIndicator(
