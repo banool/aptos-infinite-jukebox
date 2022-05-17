@@ -4,7 +4,8 @@ import 'package:aptos_infinite_jukebox/constants.dart';
 import 'package:aptos_infinite_jukebox/globals.dart';
 import 'package:aptos_sdk_dart/aptos_client_helper.dart';
 import 'package:aptos_sdk_dart/aptos_sdk_dart.dart';
-import 'package:http/http.dart' as http;
+
+import 'common.dart';
 
 // TODO: I really want to be using Events here I believe.
 
@@ -32,16 +33,12 @@ class PlaybackManager {
   /// songs ending (try every 10 seconds). This will make sure that we are
   /// queueing up new songs as they appear and we know if we're out of sync.
   Future<List<String>> pull() async {
-    String moduleAddress =
-        sharedPreferences.getString(keyModuleAddress) ?? defaultModuleAddress;
-    String moduleName =
-        sharedPreferences.getString(keyModuleName) ?? defaultModuleName;
     String aptosNodeUrl =
         sharedPreferences.getString(keyAptosNodeUrl) ?? defaultAptosNodeUrl;
     String publicAddress =
         sharedPreferences.getString(keyPublicAddress) ?? defaultPublicAddress;
 
-    var resourceType = "0x$moduleAddress::$moduleName::$moduleName";
+    var resourceType = buildResourceType();
 
     print("Getting latest queue from blockchain");
 
