@@ -10,6 +10,8 @@ import 'page_selector.dart';
 import 'playback_manager.dart';
 import 'player_page.dart';
 
+const Duration spotifyActionDelay = Duration(milliseconds: 1000);
+
 class LoggedInPage extends StatefulWidget {
   const LoggedInPage({Key? key, required this.pageSelectorController})
       : super(key: key);
@@ -24,6 +26,8 @@ class LoggedInPageState extends State<LoggedInPage> {
   bool trackAboutToStart = false;
 
   Timer? updateQueueTimer;
+
+  bool clearingQueue = false;
 
   /*
   // This is janky but I'm only subscribed to the connection status
@@ -110,6 +114,7 @@ class LoggedInPageState extends State<LoggedInPage> {
     for (String trackId in tracksToQueue) {
       var spotifyUri = "spotify:track:$trackId";
       await SpotifySdk.queue(spotifyUri: spotifyUri);
+      await Future.delayed(spotifyActionDelay);
       print("Added track to queue: $spotifyUri");
     }
     await checkWhetherInSync();
@@ -119,30 +124,42 @@ class LoggedInPageState extends State<LoggedInPage> {
   // doesn't offer a native way to do it. This leaves the dummy track playing,
   // which needs to be cleared aferward once we queue up the intended tracks.
   Future<void> clearQueue() async {
+    setState(() {
+      clearingQueue = true;
+    });
     // Queue up a track.
     print("Adding dummy track");
     String uri = "spotify:track:7p5bQJB4XsZJEEn6Tb7EaL";
     await SpotifySdk.queue(spotifyUri: uri);
-    await SpotifySdk.skipNext();
+    await Future.delayed(spotifyActionDelay);
 
     // Skip tracks until we see the track we queued up, which tells us we're at
     // the end of the queue.
     print("Skipping track until we see the dummy track");
+    bool firstIteration = true;
     while (true) {
       var playerState = await SpotifySdk.getPlayerState();
       if (playerState == null || playerState.track == null) {
         print("Waiting for Spotify to report a track playing");
-        await Future.delayed(Duration(milliseconds: 50));
+        await Future.delayed(spotifyActionDelay);
         continue;
       }
       if (playerState.track!.uri == uri) {
-        print("Queue cleared, leaving dummy track playing");
+        print("Found dummy track, queue cleared, leaving dummy track playing");
+        if (firstIteration) {
+          // Handle the rare case where the dummy track was already playing.
+          await SpotifySdk.skipNext();
+        }
         break;
       }
       print("Skipping track");
       await SpotifySdk.skipNext();
-      await Future.delayed(Duration(milliseconds: 50));
+      await Future.delayed(spotifyActionDelay);
+      firstIteration = false;
     }
+    setState(() {
+      clearingQueue = false;
+    });
   }
 
   // TODO: There seems to be a bug where we skip a song in the queue for some reason.
@@ -161,12 +178,13 @@ class LoggedInPageState extends State<LoggedInPage> {
     playbackManager.headOfRemoteQueue = null;
     playbackManager.latestConsumedTrack = null;
 
+    // Assume we're in sync for now.
+    setState(() {
+      playbackManager.setOutOfSync(false);
+    });
+
     // Clear the queue, leaving the dummy track playing. Pause if necessary.
     await clearQueue();
-    try {
-      await SpotifySdk.pause();
-      // ignore: empty_catches
-    } catch (e) {}
 
     // Add the intended songs onto the queue.
     await updateQueue();
@@ -181,6 +199,8 @@ class LoggedInPageState extends State<LoggedInPage> {
 
       // Skip to the correct position in the track.
       await SpotifySdk.seekTo(positionedMilliseconds: playbackPosition);
+
+      await Future.delayed(spotifyActionDelay);
 
       // Confirm our sync status, which will invoke a UI re-render to display
       // said status to the user.
@@ -199,6 +219,8 @@ class LoggedInPageState extends State<LoggedInPage> {
         setState(() {
           trackAboutToStart = false;
         });
+
+        await Future.delayed(spotifyActionDelay);
 
         // Confirm our sync status, which will invoke a UI re-render to display
         // said status to the user.
@@ -228,7 +250,8 @@ class LoggedInPageState extends State<LoggedInPage> {
         children += [Text("Tuning in...")];
         break;
       case TunedInState.tunedIn:
-        return PlayerPage(widget.pageSelectorController, setupPlayer);
+        return PlayerPage(
+            widget.pageSelectorController, setupPlayer, clearingQueue);
     }
 
     Widget body = Center(

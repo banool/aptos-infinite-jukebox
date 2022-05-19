@@ -13,10 +13,13 @@ import 'package:spotify_sdk/spotify_sdk.dart';
 const ImageDimension desiredImageDimension = ImageDimension.large;
 
 class PlayerPage extends StatefulWidget {
-  const PlayerPage(this.pageSelectorController, this.setupPlayer, {Key? key})
+  const PlayerPage(
+      this.pageSelectorController, this.setupPlayer, this.clearingQueue,
+      {Key? key})
       : super(key: key);
 
   final PageSelectorController pageSelectorController;
+  final bool clearingQueue;
 
   // The player needs this to invoke a resync with the intended player state.
   final Function setupPlayer;
@@ -52,6 +55,10 @@ class _PlayerPageState extends State<PlayerPage> {
   Future<void> initStateAsync() async {}
 
   Widget getSpotifyImageWidget() {
+    if (widget.clearingQueue) {
+      // Don't bother fetching images while clearing the queue.
+      return CircularProgressIndicator();
+    }
     return FutureBuilder(
         future: currentTrackInfo!.loadImageFuture,
         builder: (BuildContext context, AsyncSnapshot<Uint8List?> snapshot) {
@@ -161,7 +168,11 @@ class _PlayerPageState extends State<PlayerPage> {
           ];
 
           Widget syncButton;
-          if (playbackManager.outOfSync) {
+          if (widget.clearingQueue) {
+            syncButton = getSyncButton(
+                "Syncing up...", Colors.transparent, Colors.lightBlue,
+                includeBorder: false);
+          } else if (playbackManager.outOfSync) {
             syncButton =
                 getSyncButton("Out of sync, sync up?", Colors.white, Colors.red,
                     onPressed: () async {
@@ -219,7 +230,7 @@ class PlaybackIndicator extends StatefulWidget {
 
 class _PlaybackIndicatorState extends State<PlaybackIndicator> {
   late int position;
-  late Timer timer;
+  Timer? timer;
 
   @override
   void initState() {
@@ -243,7 +254,7 @@ class _PlaybackIndicatorState extends State<PlaybackIndicator> {
 
   @override
   void dispose() {
-    timer.cancel();
+    timer?.cancel();
     super.dispose();
   }
 
