@@ -79,7 +79,7 @@ struct Args {
 
     /// The module name. We assume the module name and top level struct
     /// name are identical, as is the convention.
-    #[clap(long, default_value = "JukeboxV8")]
+    #[clap(long, default_value = "JukeboxV10")]
     module_name: String,
 
     /// Aptos address where the module is published. If not given, we

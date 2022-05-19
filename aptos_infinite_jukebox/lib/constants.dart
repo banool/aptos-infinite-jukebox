@@ -26,5 +26,5 @@ const String defaultPublicAddress =
     "c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd";
 const String defaultModuleAddress =
     "c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd";
-const String defaultModuleName = "JukeboxV8";
+const String defaultModuleName = "JukeboxV10";
 const String? defaultPrivateKey = null;

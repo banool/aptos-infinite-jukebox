@@ -1,7 +1,7 @@
 // If ever updating this version, also update:
 // - driver/src/main.rs
 // - aptos_infinite_jukebox/lib/constants.dart
-module AptosInfiniteJukebox::JukeboxV8 {
+module AptosInfiniteJukebox::JukeboxV10 {
     use Std::ASCII;
     use Std::Errors;
     use Std::Signer;
@@ -41,7 +41,7 @@ module AptosInfiniteJukebox::JukeboxV8 {
     /// holds all the interesting stuff. We do it this way so it's easy to
     /// grab a mutable reference to everything at once without running into
     /// issues from holding multiple references. This is acceptable for now.
-    struct JukeboxV8 has key {
+    struct JukeboxV10 has key {
         inner: Inner,
     }
 
@@ -104,26 +104,27 @@ module AptosInfiniteJukebox::JukeboxV8 {
             next_song_votes: Table::new<address, Vote>(),
             voters: Vector::empty<address>(),
         };
-        move_to(account, JukeboxV8 { inner });
+        move_to(account, JukeboxV10 { inner });
     }
 
     /// Public wrapper around vote, since you can't use structs nor ascii in external calls.
-    public(script) fun vote(voter: &signer, jukebox_address: address, vote: vector<u8>) acquires JukeboxV8 {
+    public(script) fun vote(voter: &signer, jukebox_address: address, vote: vector<u8>) acquires JukeboxV10 {
         let v = Vote { song: Song { song: ASCII::string(vote) } };
         vote_internal(voter, jukebox_address, v);
     }
 
     /// Vote for what song to play in the next round. The user is able to
     /// change their vote if they want.
-    fun vote_internal(voter: &signer, jukebox_address: address, vote: Vote) acquires JukeboxV8 {
-        assert!(exists<JukeboxV8>(jukebox_address), Errors::not_published(E_NO_JUKEBOX));
+    fun vote_internal(voter: &signer, jukebox_address: address, vote: Vote) acquires JukeboxV10 {
+        assert!(exists<JukeboxV10>(jukebox_address), Errors::not_published(E_NO_JUKEBOX));
 
         let voter_addr = Signer::address_of(voter);
-        let inner = &mut borrow_global_mut<JukeboxV8>(jukebox_address).inner;
+        let inner = &mut borrow_global_mut<JukeboxV10>(jukebox_address).inner;
         *Table::borrow_mut_with_default(&mut inner.next_song_votes, &voter_addr, copy vote) = vote;
         Vector::push_back(&mut inner.voters, voter_addr);
     }
 
+    // TODO: Use IterableTable within this function to simplify it substantially.
     /// Resolve the votes into a final selection of which song to put on the
     /// queue next. Currently there is no protection ensuring that the song IDs
     /// given to us are valid in any way. If there are no votes, we just move the
@@ -133,12 +134,12 @@ module AptosInfiniteJukebox::JukeboxV8 {
     /// If the "driver" of this module (a cron that calls resolve_votes every
     /// time a song ends) stops calling this function, we expect clients will
     /// just not play anything.
-    public(script) fun resolve_votes(account: &signer) acquires JukeboxV8 {
+    public(script) fun resolve_votes(account: &signer) acquires JukeboxV10 {
         let addr = Signer::address_of(account);
 
-        assert!(exists<JukeboxV8>(addr), Errors::not_published(E_NO_JUKEBOX));
+        assert!(exists<JukeboxV10>(addr), Errors::not_published(E_NO_JUKEBOX));
 
-        let inner = &mut borrow_global_mut<JukeboxV8>(addr).inner;
+        let inner = &mut borrow_global_mut<JukeboxV10>(addr).inner;
 
         // Build up a counter of Vote to how many people made that vote.
         let vote_counter = Table::new<Vote, u64>();
@@ -186,7 +187,7 @@ module AptosInfiniteJukebox::JukeboxV8 {
     }
 
     #[test(core_resources = @CoreResources, account1 = @0x123, account2 = @0x456)]
-    public(script) fun test_initialize(core_resources: signer, account1: signer, account2: signer) acquires JukeboxV8 {
+    public(script) fun test_initialize(core_resources: signer, account1: signer, account2: signer) acquires JukeboxV10 {
         Timestamp::set_time_has_started_for_testing(&core_resources);
 
         // Account 1 is where we initialize the jukebox.
@@ -196,10 +197,10 @@ module AptosInfiniteJukebox::JukeboxV8 {
 
         // Initialize a jukebox on account1.
         initialize_jukebox(&account1);
-        assert!(exists<JukeboxV8>(addr1), Errors::internal(E_TEST_FAILURE));
+        assert!(exists<JukeboxV10>(addr1), Errors::internal(E_TEST_FAILURE));
 
         // Assert that we can see the initial song.
-        let front_of_queue = Vector::borrow(&borrow_global<JukeboxV8>(addr1).inner.song_queue, 0).song;
+        let front_of_queue = Vector::borrow(&borrow_global<JukeboxV10>(addr1).inner.song_queue, 0).song;
         assert!(
           front_of_queue == ASCII::string(b"3QVtICc8ViNOy4I5K14d8Z"),
           E_TEST_FAILURE
@@ -207,7 +208,7 @@ module AptosInfiniteJukebox::JukeboxV8 {
     }
 
     #[test(core_resources = @CoreResources, account1 = @0x123, account2 = @0x456)]
-    public(script) fun test_vote(core_resources: signer, account1: signer, account2: signer) acquires JukeboxV8 {
+    public(script) fun test_vote(core_resources: signer, account1: signer, account2: signer) acquires JukeboxV10 {
         Timestamp::set_time_has_started_for_testing(&core_resources);
 
         // Account 1 is where we initialize the jukebox.
@@ -217,25 +218,25 @@ module AptosInfiniteJukebox::JukeboxV8 {
 
         // Initialize a jukebox on account1.
         initialize_jukebox(&account1);
-        assert!(exists<JukeboxV8>(addr1), Errors::internal(E_TEST_FAILURE));
+        assert!(exists<JukeboxV10>(addr1), Errors::internal(E_TEST_FAILURE));
 
         // Submit a vote.
         let vote = Vote { song: Song { song: ASCII::string(b"abc1234") }};
         vote_internal(&account2, addr1, vote);
 
         // Assert that we can see that vote.
-        let votes = &borrow_global<JukeboxV8>(addr1).inner.next_song_votes;
+        let votes = &borrow_global<JukeboxV10>(addr1).inner.next_song_votes;
         assert!(Table::borrow(votes, &addr2) == &vote, Errors::internal(E_TEST_FAILURE));
 
         // Assert that a voter can change their vote.
         let vote2 = Vote { song: Song { song: ASCII::string(b"xyz6789") }};
         vote_internal(&account2, addr1, vote2);
-        let votes = &borrow_global<JukeboxV8>(addr1).inner.next_song_votes;
+        let votes = &borrow_global<JukeboxV10>(addr1).inner.next_song_votes;
         assert!(Table::borrow(votes, &addr2) == &vote2, Errors::internal(E_TEST_FAILURE));
     }
 
     #[test(core_resources = @CoreResources, account1 = @0x123, account2 = @0x456)]
-    public(script) fun test_resolve_votes(core_resources: signer, account1: signer, account2: signer) acquires JukeboxV8 {
+    public(script) fun test_resolve_votes(core_resources: signer, account1: signer, account2: signer) acquires JukeboxV10 {
         Timestamp::set_time_has_started_for_testing(&core_resources);
 
         // Account 1 is where we initialize the jukebox.
@@ -245,11 +246,11 @@ module AptosInfiniteJukebox::JukeboxV8 {
 
         // Initialize a jukebox on account1.
         initialize_jukebox(&account1);
-        assert!(exists<JukeboxV8>(addr1), Errors::internal(E_TEST_FAILURE));
+        assert!(exists<JukeboxV10>(addr1), Errors::internal(E_TEST_FAILURE));
 
         // Get current time_to_start_playing.
-        let front_of_queue_1 = Vector::borrow(&borrow_global<JukeboxV8>(addr1).inner.song_queue, 0).song;
-        let time_to_start_playing_1 = borrow_global<JukeboxV8>(addr1).inner.time_to_start_playing;
+        let front_of_queue_1 = Vector::borrow(&borrow_global<JukeboxV10>(addr1).inner.song_queue, 0).song;
+        let time_to_start_playing_1 = borrow_global<JukeboxV10>(addr1).inner.time_to_start_playing;
 
         // Advance the clock to 1 second since epoch.
         Timestamp::update_global_time_for_test(10000000000000000);
@@ -261,9 +262,9 @@ module AptosInfiniteJukebox::JukeboxV8 {
         // second in the queue, and that the previous song is now at the end of the
         // queue (since there weren't any votes). Also assert that time_to_start_playing
         // has been updated.
-        let front_of_queue_2 = Vector::borrow(&borrow_global<JukeboxV8>(addr1).inner.song_queue, 0).song;
-        let end_of_queue_2 = Vector::borrow(&borrow_global<JukeboxV8>(addr1).inner.song_queue, NUM_SONGS_IN_QUEUE - 1).song;
-        let time_to_start_playing_2 = borrow_global<JukeboxV8>(addr1).inner.time_to_start_playing;
+        let front_of_queue_2 = Vector::borrow(&borrow_global<JukeboxV10>(addr1).inner.song_queue, 0).song;
+        let end_of_queue_2 = Vector::borrow(&borrow_global<JukeboxV10>(addr1).inner.song_queue, NUM_SONGS_IN_QUEUE - 1).song;
+        let time_to_start_playing_2 = borrow_global<JukeboxV10>(addr1).inner.time_to_start_playing;
 
         assert!(front_of_queue_2 == ASCII::string(b"6jgeug0bubcri5YcS23WeQ"), Errors::internal(E_TEST_FAILURE));
         assert!(end_of_queue_2 == front_of_queue_1, Errors::internal(E_TEST_FAILURE));
@@ -281,15 +282,15 @@ module AptosInfiniteJukebox::JukeboxV8 {
 
         // Assert that the song we voted for (the only vote) was selected and put
         // at the end of the queue.
-        let end_of_queue_3 = Vector::borrow(&borrow_global<JukeboxV8>(addr1).inner.song_queue, NUM_SONGS_IN_QUEUE - 1).song;
-        let time_to_start_playing_3 = borrow_global<JukeboxV8>(addr1).inner.time_to_start_playing;
+        let end_of_queue_3 = Vector::borrow(&borrow_global<JukeboxV10>(addr1).inner.song_queue, NUM_SONGS_IN_QUEUE - 1).song;
+        let time_to_start_playing_3 = borrow_global<JukeboxV10>(addr1).inner.time_to_start_playing;
 
         assert!(end_of_queue_3 == vote.song.song, Errors::internal(E_TEST_FAILURE));
         assert!(time_to_start_playing_3 > time_to_start_playing_2, Errors::internal(E_TEST_FAILURE));
     }
 
     #[test(core_resources = @CoreResources, account1 = @0x123, account2 = @0x456)]
-    public(script) fun test_vote_public(core_resources: signer, account1: signer, account2: signer) acquires JukeboxV8 {
+    public(script) fun test_vote_public(core_resources: signer, account1: signer, account2: signer) acquires JukeboxV10 {
         Timestamp::set_time_has_started_for_testing(&core_resources);
 
         // Account 1 is where we initialize the jukebox.
@@ -298,7 +299,7 @@ module AptosInfiniteJukebox::JukeboxV8 {
 
         // Initialize a jukebox on account1.
         initialize_jukebox(&account1);
-        assert!(exists<JukeboxV8>(addr1), Errors::internal(E_TEST_FAILURE));
+        assert!(exists<JukeboxV10>(addr1), Errors::internal(E_TEST_FAILURE));
 
         // Submit a vote.
         let vote = b"abc1234";
