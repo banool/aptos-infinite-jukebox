@@ -29,18 +29,6 @@ class LoggedInPageState extends State<LoggedInPage> {
 
   bool clearingQueue = false;
 
-  /*
-  // This is janky but I'm only subscribed to the connection status
-  // in the builder, so I have to schedule this state change here.
-  // Perhaps I need some out of band thing to subscribe to it also?
-  WidgetsBinding.instance!.addPostFrameCallback((_) => setState(() {
-        if (tunedIn) {
-          print("Setting tunedIn to false due to disconnection");
-          tunedIn = false;
-        }
-      }));
-  */
-
   Future<void> tuneIn() async {
     print("Tuning in");
     setState(() {
@@ -69,6 +57,45 @@ class LoggedInPageState extends State<LoggedInPage> {
     }
   }
 
+  bool getWhetherPlayingCorrectSong(PlayerState playerState) {
+    bool playingCorrectSong = true;
+    if (playerState.track != null &&
+        playbackManager.headOfRemoteQueue != null) {
+      playingCorrectSong =
+          playerState.track!.uri.endsWith(playbackManager.headOfRemoteQueue!);
+    }
+    return playingCorrectSong;
+  }
+
+  bool getWhetherWithinPlaybackPositionInTolerance(PlayerState playerState) {
+    int targetPosition = playbackManager.getTargetPlaybackPosition();
+    int actualPosition = playerState.playbackPosition;
+    bool withinToleranceForPlaybackPosition =
+        (targetPosition - actualPosition).abs() < outOfSyncThresholdMilli;
+
+    print(
+        "withinToleranceForPlaybackPosition: $withinToleranceForPlaybackPosition (defined as abs($targetPosition - $actualPosition) < $outOfSyncThresholdMilli)");
+    return withinToleranceForPlaybackPosition;
+  }
+
+  Future<void> resyncIfSongCorrectAtWrongPlaybackPosition() async {
+    PlayerState? playerState;
+    try {
+      playerState = await SpotifySdk.getPlayerState();
+    } catch (e) {
+      print(
+          "Failed to get player state for trying to sync up playback position: $e");
+      return;
+    }
+    if (getWhetherPlayingCorrectSong(playerState!) &&
+        !getWhetherWithinPlaybackPositionInTolerance(playerState)) {
+      print(
+          "Playing the correct song but at the wrong position, automatically seeking to the correct spot");
+      await SpotifySdk.seekTo(
+          positionedMilliseconds: playbackManager.getTargetPlaybackPosition());
+    }
+  }
+
   Future<void> checkWhetherInSync() async {
     PlayerState? playerState;
     try {
@@ -87,22 +114,13 @@ class LoggedInPageState extends State<LoggedInPage> {
         nearEndOfSong =
             playerState.track!.duration - playerState.playbackPosition < 20000;
       }
-      bool withinToleranceForPlaybackPosition =
-          (playbackManager.getTargetPlaybackPosition() -
-                      playerState.playbackPosition)
-                  .abs() <
-              outOfSyncThresholdMilli;
-      bool playingCorrectSong = true;
-      if (playerState.track != null &&
-          playbackManager.headOfRemoteQueue != null) {
-        playingCorrectSong =
-            playerState.track!.uri.endsWith(playbackManager.headOfRemoteQueue!);
-      }
-      print(
-          "withinToleranceForPlaybackPosition: $withinToleranceForPlaybackPosition");
+      bool playingCorrectSong = getWhetherPlayingCorrectSong(playerState);
       print("playingCorrectSong: $playingCorrectSong");
+      bool withinToleranceForPlaybackPosition =
+          getWhetherWithinPlaybackPositionInTolerance(playerState);
       bool inSync = withinToleranceForPlaybackPosition &&
           (playingCorrectSong || nearEndOfSong);
+      if (!inSync) {}
       playbackManager.setOutOfSync(!inSync);
     }
   }
@@ -117,6 +135,8 @@ class LoggedInPageState extends State<LoggedInPage> {
       await Future.delayed(spotifyActionDelay);
       print("Added track to queue: $spotifyUri");
     }
+    await resyncIfSongCorrectAtWrongPlaybackPosition();
+    await Future.delayed(spotifyActionDelay);
     await checkWhetherInSync();
   }
 
@@ -168,7 +188,9 @@ class LoggedInPageState extends State<LoggedInPage> {
   // it seems correct, perhaps I just hadn't manually cleared the queue properly.
   // TODO: Over time we expect some sync drift. Be a little smarter about resyncing
   // if the user requests it, where instead of adding everything to queue, we
-  // just seek to correct location if the correct song is playing.
+  // just seek to correct location if the correct song is playing. This has its
+  // own downsides ofc because the user might be playing the correct song now
+  // but not have the correct songs queued up.
   // TODO: As it is now, the Spotify SDK cannot seem to do anything on web
   // even with a successful login. This includes queueing, playing, getting
   // the player state, etc.
