@@ -26,6 +26,7 @@ class LoggedInPageState extends State<LoggedInPage> {
   bool trackAboutToStart = false;
 
   Timer? updateQueueTimer;
+  Future? unpauseFuture;
 
   bool clearingQueue = false;
 
@@ -89,10 +90,32 @@ class LoggedInPageState extends State<LoggedInPage> {
     }
     if (getWhetherPlayingCorrectSong(playerState!) &&
         !getWhetherWithinPlaybackPositionInTolerance(playerState)) {
-      print(
-          "Playing the correct song but at the wrong position, automatically seeking to the correct spot");
-      await SpotifySdk.seekTo(
-          positionedMilliseconds: playbackManager.getTargetPlaybackPosition());
+      int target = playbackManager.getTargetPlaybackPosition();
+      if (target < 0) {
+        if (unpauseFuture != null) {
+          print(
+              "There is already an unpause future, doing nothing to resync playback position");
+        } else {
+          int sleepAmount = -target;
+          print(
+              "We're ahead of the correct position, pausing for $sleepAmount milliseconds");
+          await SpotifySdk.pause();
+          setState(() {
+            unpauseFuture =
+                Future.delayed(Duration(milliseconds: sleepAmount), (() async {
+              setState(() {
+                unpauseFuture = null;
+              });
+              await SpotifySdk.resume();
+              print("Resumed playback after $sleepAmount milliseconds");
+            }));
+          });
+        }
+      } else {
+        print(
+            "Playing the correct song but behind the correct position, automatically seeking to the correct spot");
+        await SpotifySdk.seekTo(positionedMilliseconds: target);
+      }
     }
   }
 
