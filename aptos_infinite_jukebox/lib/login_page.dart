@@ -43,10 +43,12 @@ class LoginPageState extends State<LoginPage> {
 
   Future<void> handleConnectionError(Object error) async {
     await sharedPreferences.remove(keySpotifyAccessToken);
-    setState(() {
-      connectingInformation = null;
-      widget.pageSelectorController.tunedInState = TunedInState.tunedOut;
-    });
+    if (mounted) {
+      setState(() {
+        connectingInformation = null;
+        widget.pageSelectorController.tunedInState = TunedInState.tunedOut;
+      });
+    }
     await showDialog(
         context: context,
         builder: (BuildContext context) {

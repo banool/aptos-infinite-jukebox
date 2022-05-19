@@ -1,13 +1,14 @@
 import 'dart:async';
 
-import 'package:aptos_infinite_jukebox/common.dart';
-import 'package:aptos_infinite_jukebox/globals.dart';
 import 'package:aptos_sdk_dart/aptos_client_helper.dart';
 import 'package:aptos_sdk_dart/aptos_sdk_dart.dart';
 import 'package:built_value/json_object.dart';
 import 'package:flutter/material.dart';
 
+import 'common.dart';
 import 'constants.dart';
+import 'globals.dart';
+import 'make_vote_page.dart';
 import 'page_selector.dart';
 
 class VotingPage extends StatefulWidget {
@@ -21,8 +22,6 @@ class VotingPage extends StatefulWidget {
 }
 
 class VotingPageState extends State<VotingPage> {
-  bool advisoryShownOnce = false;
-
   late Future<void> initStateAsyncFuture;
 
   Map<String, int> votes = {};
@@ -43,6 +42,11 @@ class VotingPageState extends State<VotingPage> {
       address = AptosAccount.fromPrivateKeyHexString(privateKey!).address;
     }
     initStateAsyncFuture = initStateAsync();
+  }
+
+  Future<void> initStateAsync() async {
+    await updateMyVote();
+    await updateOthersVotes();
     checkVotesTimer = Timer.periodic(Duration(seconds: 3), (timer) async {
       if (!mounted) {
         timer.cancel();
@@ -51,11 +55,6 @@ class VotingPageState extends State<VotingPage> {
       updateMyVote();
       updateOthersVotes();
     });
-  }
-
-  Future<void> initStateAsync() async {
-    await updateMyVote();
-    await updateOthersVotes();
   }
 
   // Get the vote the user made this round.
@@ -96,6 +95,9 @@ class VotingPageState extends State<VotingPage> {
     print("Table handle: $tableHandle");
 
     // Get the table item
+    // TODO this doesn't work right now, the value type is wrong.
+    // Perhaps this is the wrong approach and I should just use whatever
+    // info I retrieved for getOthersVotes.
     TableItemRequest tableItemRequest = (TableItemRequestBuilder()
           ..key = JsonObject(address!.withPrefix())
           ..keyType = "address"
@@ -134,11 +136,24 @@ class VotingPageState extends State<VotingPage> {
     ]);
   }
 
+  // TODO: Some page should probably show the current queue.
+  // I could do this based on the on chain state, since I need to be able to
+  // convert from track ID to track title and back anyway sort of.
   Widget buildVoteWidgetLoggedIn() {
-    return Text(
-      "Submitting votes from the frontend doesn't work right now.",
-      textAlign: TextAlign.center,
-    );
+    return getConnectionButton("Vote for a song", () async {
+      bool voteSuccess = await Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => MakeVotePage(
+                  pageSelectorController: widget.pageSelectorController)));
+      if (voteSuccess) {
+        print("Vote was committed successfully, updating voting state");
+        // We should only get to this point if the user voted and
+        // we confirmed the transaction was committed.
+        await updateMyVote();
+        await updateOthersVotes();
+      }
+    });
   }
 
   Widget buildVoteSummaryWidget() {
