@@ -40,7 +40,16 @@ class LoggedInPageState extends State<LoggedInPage> {
       setState(() {
         widget.pageSelectorController.tunedInState = TunedInState.tunedIn;
       });
-      updateQueueTimer?.cancel();
+      startUpdateQueueTimer();
+    } catch (e) {
+      setState(() {
+        widget.pageSelectorController.tunedInState = TunedInState.tunedOut;
+      });
+    }
+  }
+
+  void startUpdateQueueTimer() {
+    setState(() {
       updateQueueTimer = Timer.periodic(Duration(seconds: 10), (timer) async {
         if (widget.pageSelectorController.tunedInState ==
             TunedInState.tunedOut) {
@@ -51,11 +60,7 @@ class LoggedInPageState extends State<LoggedInPage> {
         print("Checking for queue / playback updates");
         await updateQueue();
       });
-    } catch (e) {
-      setState(() {
-        widget.pageSelectorController.tunedInState = TunedInState.tunedOut;
-      });
-    }
+    });
   }
 
   bool getWhetherPlayingCorrectSong(PlayerState playerState) {
@@ -143,7 +148,6 @@ class LoggedInPageState extends State<LoggedInPage> {
           getWhetherWithinPlaybackPositionInTolerance(playerState);
       bool inSync = withinToleranceForPlaybackPosition &&
           (playingCorrectSong || nearEndOfSong);
-      if (!inSync) {}
       playbackManager.setOutOfSync(!inSync);
     }
   }
@@ -220,8 +224,10 @@ class LoggedInPageState extends State<LoggedInPage> {
   // TODO: The periodic updateQueue only works if the app is foregrounded.
   Future<void> setupPlayer() async {
     print("Setting up player afresh");
+
     playbackManager.headOfRemoteQueue = null;
     playbackManager.latestConsumedTrack = null;
+    updateQueueTimer?.cancel();
 
     // Assume we're in sync for now.
     setState(() {
@@ -251,6 +257,9 @@ class LoggedInPageState extends State<LoggedInPage> {
       // said status to the user.
       await checkWhetherInSync();
 
+      await Future.delayed(spotifyActionDelay);
+      startUpdateQueueTimer();
+
       print("Set up player midway through song");
     } else {
       // The track will start soon. Schedule it for then.
@@ -270,6 +279,9 @@ class LoggedInPageState extends State<LoggedInPage> {
         // Confirm our sync status, which will invoke a UI re-render to display
         // said status to the user.
         await checkWhetherInSync();
+
+        await Future.delayed(spotifyActionDelay);
+        startUpdateQueueTimer();
 
         print("Set up player after waiting for song to start");
       });
