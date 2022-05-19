@@ -12,6 +12,16 @@ module AptosInfiniteJukebox::JukeboxV8 {
     /// How long to delay "playing" the first song when a jukebox is initialized. 
     const DELAY_BETWEEN_SONGS: u64 = 5000000;  // 5 seconds.
 
+    /// This is how long prior to the end of a song that the driver kicks in and
+    /// triggers vote resolution. Realistically it's impossible to time this perfectly,
+    /// so this sets a lower bound on when the next song will start, mostly guaranteeing
+    /// that the next song will start some time after the end of the previou song.
+    /// The frontend can adapt to this and pause playback when one song ends until it
+    /// is the right time to start the next song. This value should match the
+    /// resolve_votes_threshold_ms value for the driver (except this is in microseconds,
+    /// not milliseconds).
+    const TIME_BEFORE_END_OF_SONG_VOTE_RESOLUTION_TRIGGERED: u64 = 20000000;  // 20 seconds.
+
     /// How many songs should be in the queue at all times.
     const NUM_SONGS_IN_QUEUE: u64 = 5;
 
@@ -163,7 +173,7 @@ module AptosInfiniteJukebox::JukeboxV8 {
         Vector::push_back(&mut inner.song_queue, current_winner);
 
         // Update time_to_start_playing regardless of whether a new song was elected.
-        *&mut inner.time_to_start_playing = Timestamp::now_microseconds();
+        *&mut inner.time_to_start_playing = Timestamp::now_microseconds() + TIME_BEFORE_END_OF_SONG_VOTE_RESOLUTION_TRIGGERED;
 
         // Make sure everything ends / is reset as expected.
         Table::destroy_empty(vote_counter);
