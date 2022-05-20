@@ -6,6 +6,16 @@ cd ~
 aptos config init
 ```
 
+If you already have a config but you need to recreate the account, e.g. for a new devnet release, do this:
+```
+aptos config init --private-key `yq .profiles.default.private_key < ~/.aptos/config.yml`
+```
+
+This also works:
+```
+aptos account create --private-key `yq .profiles.default.private_key < ~/.aptos/config.yml` --account `yq .profiles.default.account < ~/.aptos/config.yml`
+```
+
 ## Setting up the module
 Make sure the addresses in Move.toml matches the `account` field in ~/.aptos/config.yml`.
 
