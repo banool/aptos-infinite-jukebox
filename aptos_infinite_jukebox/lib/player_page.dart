@@ -14,12 +14,12 @@ const ImageDimension desiredImageDimension = ImageDimension.large;
 
 class PlayerPage extends StatefulWidget {
   const PlayerPage(this.pageSelectorController, this.setupPlayer,
-      this.clearingQueue, this.secondsUntilUnpause,
+      this.settingUpQueue, this.secondsUntilUnpause,
       {Key? key})
       : super(key: key);
 
   final PageSelectorController pageSelectorController;
-  final bool clearingQueue;
+  final bool settingUpQueue;
 
   // The player needs this to invoke a resync with the intended player state.
   final Function setupPlayer;
@@ -58,8 +58,8 @@ class _PlayerPageState extends State<PlayerPage> {
   Future<void> initStateAsync() async {}
 
   Widget getSpotifyImageWidget() {
-    if (widget.clearingQueue) {
-      // Don't bother fetching images while clearing the queue.
+    if (widget.settingUpQueue) {
+      // Don't bother fetching images while setting up the queue.
       return CircularProgressIndicator();
     }
     return FutureBuilder(
@@ -150,12 +150,12 @@ class _PlayerPageState extends State<PlayerPage> {
 
           List<Widget> children = [
             Text(
-              track.name,
+              widget.settingUpQueue ? "" : track.name,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
               textAlign: TextAlign.center,
             ),
             Text(
-              track.artist.name ?? "Unknown Artist",
+              widget.settingUpQueue ? "" : track.artist.name ?? "Unknown arist",
               style: TextStyle(fontSize: 20),
               textAlign: TextAlign.center,
             ),
@@ -171,7 +171,7 @@ class _PlayerPageState extends State<PlayerPage> {
           ];
 
           Widget syncButton;
-          if (widget.clearingQueue) {
+          if (widget.settingUpQueue) {
             syncButton = getSyncButton(
                 "Syncing up...", Colors.transparent, Colors.lightBlue,
                 includeBorder: false);

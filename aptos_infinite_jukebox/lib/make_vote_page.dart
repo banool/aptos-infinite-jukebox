@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:aptos_infinite_jukebox/common.dart';
+import 'package:aptos_infinite_jukebox/globals.dart';
 import 'package:aptos_infinite_jukebox/vote_results_page.dart';
 import 'package:flutter/material.dart';
+import 'package:spotify/spotify.dart';
 
 import 'page_selector.dart';
 
@@ -23,10 +25,13 @@ class MakeVotePageState extends State<MakeVotePage> {
 
   // A list of Spotify track IDs I believe.
   // Or perhaps an object that will have the track name, artist, etc. in it.
-  List<String> searchResults = [];
+  List<Track> searchResults = [];
 
   // This will be set once the user selects the song they want to vote for.
-  String? selectedResult;
+  Track? selectedResult;
+
+  // Only search after a timer so we don't spam the API.
+  Timer? searchTimer;
 
   @override
   void initState() {
@@ -36,21 +41,32 @@ class MakeVotePageState extends State<MakeVotePage> {
 
   Future<void> initStateAsync() async {}
 
-  // Limit this to 25 or something.
-  // Or dynamically generate the cards as the user scrolls.
-  // Something to avoid fetching all those images.
-  List<String> searchSpotify(String searchTerm) {
-    // TODO
-    return ["test"];
+  Future<List<Track>> searchSpotify(String searchTerm) async {
+    var getter = spotifyApi!.search.get(searchTerm, types: [SearchType.track]);
+    // Get first 10 results.
+    var search = await getter.first(10);
+    List<Track> out = [];
+    for (var page in search) {
+      for (var track in page.items!) {
+        out.add(track as Track);
+      }
+    }
+    return out;
   }
 
   void search(String searchTerm) {
     setState(() {
       if (searchTerm == "") {
         searchResults = [];
-      } else {
-        searchResults = searchSpotify(searchTerm);
+        return;
       }
+      searchTimer?.cancel();
+      searchTimer = Timer(Duration(milliseconds: 250), () async {
+        var results = await searchSpotify(searchTerm);
+        setState(() {
+          searchResults = results;
+        });
+      });
     });
   }
 
@@ -72,7 +88,7 @@ class MakeVotePageState extends State<MakeVotePage> {
 
   // This input will need to be a spotify track object instead that lets me
   // get an image for the leading piece.
-  Widget buildSongListItem(String item, {bool includeClearButton = false}) {
+  Widget buildSongListItem(Track track, {bool includeClearButton = false}) {
     Widget? trailing;
     if (includeClearButton) {
       trailing = IconButton(
@@ -86,13 +102,13 @@ class MakeVotePageState extends State<MakeVotePage> {
     }
     return Card(
         child: ListTile(
-      leading: Text("todo make this a small image"),
-      title: Text("Song name"),
-      subtitle: Text("Song artist"),
+      title: Text(track.name ?? "Unknown track name"),
+      subtitle: Text(track.artists?.map((Artist a) => a.name).join(",") ??
+          "Unknown artist"),
       trailing: trailing,
       onTap: () {
         setState(() {
-          selectedResult = item;
+          selectedResult = track;
         });
       },
     ));
@@ -165,7 +181,7 @@ class MakeVotePageState extends State<MakeVotePage> {
   }
 
   Widget buildSongSelectedWidget(BuildContext context) {
-    String ss = selectedResult!;
+    Track ss = selectedResult!;
 
     return Column(
       children: [

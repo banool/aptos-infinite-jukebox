@@ -38,8 +38,8 @@ class PageSelectorController {
   late void Function() refresh;
   TunedInState tunedInState = TunedInState.tunedOut;
 
-  void goToSettings() {
-    currentNavBarIndex = 2;
+  void goToTab(int index) {
+    currentNavBarIndex = index;
     refresh();
   }
 

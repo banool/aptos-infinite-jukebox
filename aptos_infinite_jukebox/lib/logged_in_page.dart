@@ -33,7 +33,7 @@ class LoggedInPageState extends State<LoggedInPage> {
   // This is only used for display purposes.
   int? secondsUntilUnpause;
 
-  bool clearingQueue = false;
+  bool settingUpQueue = false;
 
   Future<void> tuneIn() async {
     print("Tuning in");
@@ -141,28 +141,24 @@ class LoggedInPageState extends State<LoggedInPage> {
         unpauseFuture =
             Future.delayed(Duration(milliseconds: sleepAmount), (() async {
           await SpotifySdk.resume();
-          await Future.delayed(spotifyActionDelay * 5);
           print("Resumed playback after $sleepAmount milliseconds");
           setState(() {
             unpauseFuture = null;
           });
+          await Future.delayed(spotifyActionDelay * 5);
         }));
-      });
-      setState(() {
         secondsUntilUnpause = min(sleepAmount ~/ 1000, 1);
       });
       Timer.periodic(Duration(seconds: 1), (timer) {
         setState(() {
-          setState(() {
-            if (secondsUntilUnpause == null) {
-              timer.cancel();
-              return;
-            }
-            secondsUntilUnpause = secondsUntilUnpause! - 1;
-            if (secondsUntilUnpause == 0) {
-              secondsUntilUnpause = null;
-            }
-          });
+          if (secondsUntilUnpause == null) {
+            timer.cancel();
+            return;
+          }
+          secondsUntilUnpause = secondsUntilUnpause! - 1;
+          if (secondsUntilUnpause == 0) {
+            secondsUntilUnpause = null;
+          }
         });
       });
     } else {
@@ -233,16 +229,23 @@ class LoggedInPageState extends State<LoggedInPage> {
     }
   }
 
+  String getRandomTrackId() {
+    return ([
+      "7p5bQJB4XsZJEEn6Tb7EaL",
+      "0DIRDVwOuY3TGHuE4AhCWW",
+      "76N9U7cOiYgSpDmLP4wTJ5",
+      "7cctPQS83y620UQtMd1ilL",
+    ]..shuffle())
+        .first;
+  }
+
   // This is a very janky way of clearing the queue, since the Spotify SDK
   // doesn't offer a native way to do it. This leaves the dummy track playing,
   // which needs to be cleared aferward once we queue up the intended tracks.
   Future<void> clearQueue() async {
-    setState(() {
-      clearingQueue = true;
-    });
     // Queue up a track.
     print("Adding dummy track");
-    String uri = "spotify:track:7p5bQJB4XsZJEEn6Tb7EaL";
+    String uri = "spotify:track:${getRandomTrackId()}";
     await SpotifySdk.queue(spotifyUri: uri);
     await Future.delayed(spotifyActionDelay);
 
@@ -270,9 +273,6 @@ class LoggedInPageState extends State<LoggedInPage> {
       await Future.delayed(spotifyActionDelay);
       firstIteration = false;
     }
-    setState(() {
-      clearingQueue = false;
-    });
   }
 
   Future<void> startPlaying({int? playbackPosition}) async {
@@ -321,6 +321,7 @@ class LoggedInPageState extends State<LoggedInPage> {
     // Assume we're in sync for now.
     setState(() {
       playbackManager.setOutOfSync(false);
+      settingUpQueue = true;
     });
 
     // Clear the queue, leaving the dummy track playing. Pause if necessary.
@@ -329,6 +330,10 @@ class LoggedInPageState extends State<LoggedInPage> {
     // Add the intended songs onto the queue.
     await updateQueue();
     await Future.delayed(spotifyActionDelay);
+
+    setState(() {
+      settingUpQueue = false;
+    });
 
     // Skip the dummy track.
     await SpotifySdk.skipNext();
@@ -360,7 +365,7 @@ class LoggedInPageState extends State<LoggedInPage> {
         break;
       case TunedInState.tunedIn:
         return PlayerPage(widget.pageSelectorController, setupPlayer,
-            clearingQueue, secondsUntilUnpause);
+            settingUpQueue, secondsUntilUnpause);
     }
 
     Widget body = Center(
@@ -370,5 +375,12 @@ class LoggedInPageState extends State<LoggedInPage> {
     ));
     return buildTopLevelScaffold(widget.pageSelectorController, body,
         title: "Tune in?");
+  }
+
+  @override
+  void dispose() {
+    updateQueueTimer?.cancel();
+    resyncAndCheckTimer?.cancel();
+    super.dispose();
   }
 }

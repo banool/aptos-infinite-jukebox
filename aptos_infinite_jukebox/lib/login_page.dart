@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aptos_infinite_jukebox/globals.dart';
 import 'package:aptos_infinite_jukebox/page_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:spotify/spotify.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 
 import 'common.dart';
@@ -33,8 +34,37 @@ class LoginPageState extends State<LoginPage> {
     initStateAsyncFuture = initStateAsync();
   }
 
+  int getNowInSeconds() {
+    return DateTime.now().millisecondsSinceEpoch ~/ 1000;
+  }
+
+  Future<void> writeAccessTokenToStorage(String accessToken) async {
+    await sharedPreferences.setString(
+        keySpotifyAccessToken, "$accessToken==::==${getNowInSeconds()}");
+  }
+
+  // Assume access tokens only last 3600 seconds.
+  String? readAccessTokenFromStorage() {
+    String? accessTokenRaw = sharedPreferences.getString(keySpotifyAccessToken);
+    if (accessTokenRaw == null) {
+      return null;
+    }
+    var s = accessTokenRaw.split("==::==");
+    String accessToken = s[0];
+    int timeStored = int.parse(s[1]);
+    if (getNowInSeconds() - timeStored > 3500) {
+      return null;
+    }
+    return accessToken;
+  }
+
   Future<void> initStateAsync() async {
-    String? accessToken = sharedPreferences.getString(keySpotifyAccessToken);
+    String? accessToken;
+    try {
+      accessToken = readAccessTokenFromStorage();
+    } catch (e) {
+      await sharedPreferences.remove(keySpotifyAccessToken);
+    }
     if (accessToken != null) {
       print("Access token found on launch: $accessToken");
       await connectToSpotify(accessToken);
@@ -84,10 +114,11 @@ class LoginPageState extends State<LoginPage> {
       );
       // Don't bother storing the token on web.
       if (!onWeb) {
-        await sharedPreferences.setString(keySpotifyAccessToken, accessToken);
+        await writeAccessTokenToStorage(accessToken);
       }
       print("Got new access token");
       await connectToSpotify(accessToken);
+      await SpotifySdk.pause();
       // connectToSpotify will handle the state if it connects correctly,
       // no need to duplicate that logic here.
     } catch (e) {
@@ -110,6 +141,7 @@ class LoginPageState extends State<LoginPage> {
         playerName: appTitle,
         accessToken: accessToken,
       );
+      spotifyApi = SpotifyApi.withAccessToken(accessToken);
       if (mounted) {
         setState(() {
           connectingInformation = null;

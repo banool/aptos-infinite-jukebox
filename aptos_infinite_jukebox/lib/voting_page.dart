@@ -122,17 +122,18 @@ class VotingPageState extends State<VotingPage> {
   // Get all the votes for this round.
   Future<void> updateOthersVotes() async {}
 
-  Widget buildVoteWidgetNotLoggedIn() {
+  Widget buildVoteWidgetNotLoggedIn(
+      String text, String buttonText, int tabIndexToGoTo) {
     return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Padding(
           padding: EdgeInsets.only(left: 25, right: 25),
           child: Text(
-            "You must set the private key for your Aptos account in order to vote.",
+            text,
             textAlign: TextAlign.center,
           )),
       Padding(padding: EdgeInsets.only(top: 30)),
-      getConnectionButton(
-          "Go to Settings", widget.pageSelectorController.goToSettings),
+      getConnectionButton(buttonText,
+          () => widget.pageSelectorController.goToTab(tabIndexToGoTo)),
     ]);
   }
 
@@ -186,7 +187,15 @@ class VotingPageState extends State<VotingPage> {
     Widget voteWidget;
     String? privateKeyRaw = sharedPreferences.getString(keyPrivateKey);
     if (privateKeyRaw == null || privateKeyRaw == "") {
-      voteWidget = buildVoteWidgetNotLoggedIn();
+      voteWidget = buildVoteWidgetNotLoggedIn(
+          "You must set the private key for your Aptos account in order to vote.",
+          "Go to Settings",
+          2);
+    } else if (spotifyApi == null) {
+      voteWidget = buildVoteWidgetNotLoggedIn(
+          "You must be logged in to Spotify to vote (to search for songs)",
+          "Go to Player",
+          0);
     } else {
       voteWidget = buildVoteWidgetLoggedIn();
     }
