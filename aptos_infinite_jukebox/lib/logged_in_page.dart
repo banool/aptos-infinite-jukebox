@@ -29,7 +29,6 @@ class LoggedInPageState extends State<LoggedInPage> {
   Timer? updateQueueTimer;
   Timer? resyncAndCheckTimer;
   Future? unpauseFuture;
-  bool currentlySeeking = false;
 
   // This is only used for display purposes.
   int? secondsUntilUnpause;
@@ -72,7 +71,7 @@ class LoggedInPageState extends State<LoggedInPage> {
   void startResyncAndCheckTimer() {
     setState(() {
       resyncAndCheckTimer =
-          Timer.periodic(Duration(milliseconds: 100), (timer) async {
+          Timer.periodic(Duration(milliseconds: 200), (timer) async {
         if (widget.pageSelectorController.tunedInState ==
             TunedInState.tunedOut) {
           print("Tuned out, cancelling timer");
@@ -112,7 +111,7 @@ class LoggedInPageState extends State<LoggedInPage> {
           "noisy: There is already an unpause future, doing nothing to resync playback position");
       return false;
     }
-    if (currentlySeeking) {
+    if (playbackManager.currentlySeeking) {
       debugPrint("noisy: We're seeking right now, doing nothing to resync");
       return false;
     }
@@ -155,13 +154,13 @@ class LoggedInPageState extends State<LoggedInPage> {
       Timer.periodic(Duration(seconds: 1), (timer) {
         setState(() {
           setState(() {
-            secondsUntilUnpause = secondsUntilUnpause! - 1;
-            if (secondsUntilUnpause == 0) {
-              secondsUntilUnpause = null;
-            }
             if (secondsUntilUnpause == null) {
               timer.cancel();
               return;
+            }
+            secondsUntilUnpause = secondsUntilUnpause! - 1;
+            if (secondsUntilUnpause == 0) {
+              secondsUntilUnpause = null;
             }
           });
         });
@@ -169,14 +168,10 @@ class LoggedInPageState extends State<LoggedInPage> {
     } else {
       print(
           "Playing the correct song but behind the correct position, automatically seeking to the correct spot");
-      setState(() {
-        currentlySeeking = true;
-      });
+      playbackManager.currentlySeeking = true;
       await SpotifySdk.seekTo(positionedMilliseconds: target);
       await Future.delayed(spotifyActionDelay * 5);
-      setState(() {
-        currentlySeeking = false;
-      });
+      playbackManager.currentlySeeking = false;
     }
     return true;
   }

@@ -20,6 +20,7 @@ class PlaybackManager extends ChangeNotifier {
   String? headOfRemoteQueue;
   DateTime targetTrackStartMilli;
   bool _outOfSync = false;
+  bool currentlySeeking = false;
 
   PlaybackManager(this.latestConsumedTrack, this.headOfRemoteQueue,
       this.targetTrackStartMilli);
