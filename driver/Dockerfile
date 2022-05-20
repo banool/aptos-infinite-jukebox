@@ -5,14 +5,8 @@ FROM rust:1.60 as build
 WORKDIR /build
 COPY . .
 
-# Add the necessary libraries to build / get the binaries.
-RUN apt-get update && apt-get install -y libclang-dev wget unzip
-
-# Download the aptos CLI.
-RUN wget https://github.com/aptos-labs/aptos-core/releases/download/cli-latest/aptos-v0.1.0-linux-x86_64.zip -O aptos.zip
-
-# Move it into position.
-RUN unzip aptos.zip
+# Add the necessary libraries to build.
+RUN apt-get update && apt-get install -y libclang-dev
 
 # Build the binary, strip it to make it smaller.
 RUN cargo build --release
@@ -23,14 +17,6 @@ FROM debian:bullseye-slim
 
 # Copy in the binaries from the previous build stage.
 COPY --from=build /build/target/release/driver /bin/driver
-COPY --from=build /build/aptos /bin/aptos
-
-# Add necessary deps
-RUN apt-get update && apt-get install -y libssl-dev ca-certificates
-
-# Add script we use for setting up the Aptos wallet config.
-COPY setup_wallet.sh .
-RUN chmod +x /setup_wallet.sh
 
 # Run the driver.
 ENTRYPOINT ["/bin/driver"]
