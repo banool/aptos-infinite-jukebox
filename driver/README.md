@@ -3,7 +3,7 @@
 ## Developing
 You want to run it like this every few seconds:
 ```
-cargo run -- -d --spotify-client-id 'aaaaaaaaaaaaaaaa' --spotify-client-secret 'bbbbbbbbbbbbbbbbbb' --account-private-key cccccccc --account-public-address 'ddddddddd'
+cargo run -- -d --spotify-client-id 'aaaaaaaaaaaaaaaa' --spotify-client-secret 'bbbbbbbbbbbbbbbbbb' --account-private-key cccccccc
 ```
 
 ## Deploying
