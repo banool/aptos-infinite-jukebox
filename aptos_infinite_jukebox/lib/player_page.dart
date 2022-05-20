@@ -13,8 +13,8 @@ import 'package:spotify_sdk/spotify_sdk.dart';
 const ImageDimension desiredImageDimension = ImageDimension.large;
 
 class PlayerPage extends StatefulWidget {
-  const PlayerPage(
-      this.pageSelectorController, this.setupPlayer, this.clearingQueue,
+  const PlayerPage(this.pageSelectorController, this.setupPlayer,
+      this.clearingQueue, this.secondsUntilUnpause,
       {Key? key})
       : super(key: key);
 
@@ -23,6 +23,9 @@ class PlayerPage extends StatefulWidget {
 
   // The player needs this to invoke a resync with the intended player state.
   final Function setupPlayer;
+
+  // The player uses this to display a countdown to the next song starting.
+  final int? secondsUntilUnpause;
 
   @override
   State<PlayerPage> createState() => _PlayerPageState();
@@ -171,6 +174,12 @@ class _PlayerPageState extends State<PlayerPage> {
           if (widget.clearingQueue) {
             syncButton = getSyncButton(
                 "Syncing up...", Colors.transparent, Colors.lightBlue,
+                includeBorder: false);
+          } else if (widget.secondsUntilUnpause != null) {
+            syncButton = getSyncButton(
+                "Next song starting in ${widget.secondsUntilUnpause}...",
+                Colors.transparent,
+                Colors.lightBlue,
                 includeBorder: false);
           } else if (playbackManager.outOfSync) {
             syncButton =
