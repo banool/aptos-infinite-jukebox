@@ -18,5 +18,7 @@ FROM debian:bullseye-slim
 # Copy in the binaries from the previous build stage.
 COPY --from=build /build/target/release/driver /bin/driver
 
+RUN apt-get update && apt-get install -y libssl-dev ca-certificates
+
 # Run the driver.
 ENTRYPOINT ["/bin/driver"]
