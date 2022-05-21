@@ -445,9 +445,11 @@ packages:
   spotify_sdk:
     dependency: "direct main"
     description:
-      name: spotify_sdk
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: "."
+      ref: main
+      resolved-ref: ed4243e8d6648775ef84567317ffcb8b3cc98e20
+      url: "https://github.com/banool/spotify_sdk.git"
+    source: git
     version: "2.3.0"
   stack_trace:
     dependency: transitive

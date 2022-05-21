@@ -1,7 +1,9 @@
 name: aptos_infinite_jukebox
 description: An Infinite Jukebox powered by Aptos
 
-version: 1.0.110+111
+publish_to: none
+
+version: 1.0.112+113
 
 environment:
   sdk: ">=2.16.2 <3.0.0"
@@ -20,6 +22,9 @@ dependencies:
   shared_preferences:
   spotify:
   spotify_sdk:
+    git:
+      url: https://github.com/banool/spotify_sdk.git
+      ref: main
   url_launcher:
 
 dev_dependencies:

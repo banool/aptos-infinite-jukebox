@@ -95,7 +95,7 @@ class LoginPageState extends State<LoginPage> {
   String? getScope() {
     String? scope;
     if (onWeb) {
-      scope = spotifyAccessTokenScope;
+      // scope = spotifyAccessTokenScope;
     }
     return scope;
   }
