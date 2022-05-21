@@ -246,19 +246,25 @@ class _PlaybackIndicatorState extends State<PlaybackIndicator> {
     super.initState();
     position = widget.initialPosition;
     if (!widget.isPaused) {
-      timer = Timer.periodic(Duration(milliseconds: 100), (_) {
-        setState(() {
-          position = min(widget.trackDuration,
-              position + (100 * widget.playbackSpeed).toInt());
-        });
-      });
+      startTimer();
     }
+  }
+
+  void startTimer() {
+    timer?.cancel();
+    timer = Timer.periodic(Duration(milliseconds: 100), (_) {
+      setState(() {
+        position = min(widget.trackDuration,
+            position + (100 * widget.playbackSpeed).toInt());
+      });
+    });
   }
 
   @override
   void didUpdateWidget(PlaybackIndicator oldWidget) {
     super.didUpdateWidget(oldWidget);
     position = widget.initialPosition;
+    startTimer();
   }
 
   @override

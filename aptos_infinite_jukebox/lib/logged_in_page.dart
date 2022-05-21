@@ -353,7 +353,7 @@ class LoggedInPageState extends State<LoggedInPage> {
         children: const [Text("Track about to start...")],
       );
       return buildTopLevelScaffold(widget.pageSelectorController, body,
-          title: "Tuning in...");
+          title: "Tuning in");
     }
 
     List<Widget> children = [];
@@ -362,7 +362,11 @@ class LoggedInPageState extends State<LoggedInPage> {
         children += [getConnectionButton("Tune in!", tuneIn)];
         break;
       case TunedInState.tuningIn:
-        children += [Text("Tuning in...")];
+        children += [
+          Text("Tuning in", style: TextStyle(fontSize: 18)),
+          Padding(padding: EdgeInsets.only(top: 20)),
+          CircularProgressIndicator()
+        ];
         break;
       case TunedInState.tunedIn:
         return PlayerPage(widget.pageSelectorController, setupPlayer,
