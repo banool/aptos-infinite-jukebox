@@ -52,8 +52,11 @@ class SettingsPageState extends State<SettingsPage> {
               ),
               trailing: Container(),
               onPressed: (BuildContext context) async {
-                bool confirmed = await showChangeStringSharedPrefDialog(context,
-                    "Jukebox address", keyPublicAddress, defaultPublicAddress);
+                bool confirmed = await showChangeStringSharedPrefDialog(
+                    context,
+                    "Jukebox address",
+                    keyJukeboxAddress,
+                    defaultJukeboxAddress);
                 if (confirmed) {
                   await clearCachedTableHandle();
                   setState(() {});

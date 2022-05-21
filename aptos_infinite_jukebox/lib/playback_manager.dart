@@ -22,6 +22,8 @@ class PlaybackManager extends ChangeNotifier {
   bool _outOfSync = false;
   bool currentlySeeking = false;
 
+  Future? unpauseFuture;
+
   PlaybackManager(this.latestConsumedTrack, this.headOfRemoteQueue,
       this.targetTrackStartMilli);
 
@@ -47,8 +49,8 @@ class PlaybackManager extends ChangeNotifier {
   Future<List<String>> pull() async {
     String aptosNodeUrl =
         sharedPreferences.getString(keyAptosNodeUrl) ?? defaultAptosNodeUrl;
-    String publicAddress =
-        sharedPreferences.getString(keyPublicAddress) ?? defaultPublicAddress;
+    String jukeboxAddress =
+        sharedPreferences.getString(keyJukeboxAddress) ?? defaultJukeboxAddress;
 
     var resourceType = buildResourceType();
 
@@ -59,9 +61,10 @@ class PlaybackManager extends ChangeNotifier {
         AptosClientHelper.fromBaseUrl(aptosNodeUrl);
     AccountResource resource;
     try {
-      resource = await AptosClientHelper.unwrapClientCall(
-          aptosClientHelper.client.getAccountsApi().getAccountResource(
-              address: publicAddress, resourceType: resourceType));
+      resource = await unwrapClientCall(aptosClientHelper.client
+          .getAccountsApi()
+          .getAccountResource(
+              address: jukeboxAddress, resourceType: resourceType));
     } catch (e) {
       print("Failed to pull resource from blockchain: $e");
       return [];

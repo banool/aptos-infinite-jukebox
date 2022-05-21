@@ -28,7 +28,6 @@ class LoggedInPageState extends State<LoggedInPage> {
 
   Timer? updateQueueTimer;
   Timer? resyncAndCheckTimer;
-  Future? unpauseFuture;
 
   // This is only used for display purposes.
   int? secondsUntilUnpause;
@@ -106,7 +105,7 @@ class LoggedInPageState extends State<LoggedInPage> {
 
   // Returns true if it did anything.
   Future<bool> resyncIfSongCorrectAtWrongPlaybackPosition() async {
-    if (unpauseFuture != null) {
+    if (playbackManager.unpauseFuture != null) {
       debugPrint(
           "noisy: There is already an unpause future, doing nothing to resync playback position");
       return false;
@@ -138,12 +137,12 @@ class LoggedInPageState extends State<LoggedInPage> {
           "We're ahead of the correct position, pausing for $sleepAmount milliseconds");
       await SpotifySdk.pause();
       setState(() {
-        unpauseFuture =
+        playbackManager.unpauseFuture =
             Future.delayed(Duration(milliseconds: sleepAmount), (() async {
           await SpotifySdk.resume();
           print("Resumed playback after $sleepAmount milliseconds");
           setState(() {
-            unpauseFuture = null;
+            playbackManager.unpauseFuture = null;
           });
           await Future.delayed(spotifyActionDelay * 5);
         }));

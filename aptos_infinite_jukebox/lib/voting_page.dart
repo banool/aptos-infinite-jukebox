@@ -45,15 +45,15 @@ class VotingPageState extends State<VotingPage> {
   }
 
   Future<void> initStateAsync() async {
-    await updateMyVote();
-    await updateOthersVotes();
+    //await updateMyVote();
+    //await updateOthersVotes();
     checkVotesTimer = Timer.periodic(Duration(seconds: 3), (timer) async {
       if (!mounted) {
         timer.cancel();
         return;
       }
-      updateMyVote();
-      updateOthersVotes();
+      //updateMyVote();
+      //updateOthersVotes();
     });
   }
 
@@ -62,7 +62,7 @@ class VotingPageState extends State<VotingPage> {
     String aptosNodeUrl =
         sharedPreferences.getString(keyAptosNodeUrl) ?? defaultAptosNodeUrl;
     String publicAddress =
-        sharedPreferences.getString(keyPublicAddress) ?? defaultPublicAddress;
+        sharedPreferences.getString(keyJukeboxAddress) ?? defaultJukeboxAddress;
 
     AptosClientHelper aptosClientHelper =
         AptosClientHelper.fromBaseUrl(aptosNodeUrl);
@@ -78,8 +78,9 @@ class VotingPageState extends State<VotingPage> {
       // Pull resources.
       AccountResource resource;
       try {
-        resource = await AptosClientHelper.unwrapClientCall(
-            aptosClientHelper.client.getAccountsApi().getAccountResource(
+        resource = await unwrapClientCall(aptosClientHelper.client
+            .getAccountsApi()
+            .getAccountResource(
                 address: publicAddress, resourceType: buildResourceType()));
         // Process info from the resources.
         var inner = resource.data.asMap["inner"];
@@ -105,7 +106,7 @@ class VotingPageState extends State<VotingPage> {
         .build();
     JsonObject obj;
     try {
-      obj = await AptosClientHelper.unwrapClientCall(aptosClientHelper.client
+      obj = await unwrapClientCall(aptosClientHelper.client
           .getTableApi()
           .getTableItem(
               tableHandle: tableHandle, tableItemRequest: tableItemRequest));
