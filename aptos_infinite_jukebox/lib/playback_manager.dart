@@ -77,8 +77,6 @@ class PlaybackManager extends ChangeNotifier {
       return [];
     }
 
-    print("Resource: $resource");
-
     // Process info from the resources.
     var inner = resource.data.asMap["inner"];
 
@@ -89,7 +87,7 @@ class PlaybackManager extends ChangeNotifier {
     // Get the queue as it is in the account.
     List<String> rawTrackQueue = [];
     for (Map<String, dynamic> o in inner["song_queue"]) {
-      rawTrackQueue.add(o["song"]!);
+      rawTrackQueue.add(o["track_id"]!);
     }
 
     if (!listEquals(lastSeenQueue, rawTrackQueue)) {

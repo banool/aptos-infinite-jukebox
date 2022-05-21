@@ -1,5 +1,5 @@
 // If ever updating this version, also update:
-// - driver/src/main.rs
+// - driver/src/aptos_helper.rs
 // - aptos_infinite_jukebox/lib/constants.dart
 module AptosInfiniteJukebox::JukeboxV11 {
     use Std::ASCII;

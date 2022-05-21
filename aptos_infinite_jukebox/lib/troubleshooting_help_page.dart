@@ -29,6 +29,8 @@ Widget getTroubleshootingHelpPage(
           "Make sure your account is topped up. We're in the devnet / testnet "
               "phase right now, so use another wallet to hit the faucet a few "
               "times. ",
+          "Make sure your system time is correct. If it is not, the timeout we "
+              "calculate for your transaction will be wrong."
         ],
         "Is it safe to store my private key in this app?": [
           "It depends on your trust model. Do you trust Apple / Google? Do you "

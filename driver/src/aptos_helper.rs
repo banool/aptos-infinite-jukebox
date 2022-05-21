@@ -28,7 +28,7 @@ pub struct AptosArgs {
 
     /// The module name. We assume the module name and top level struct
     /// name are identical, as is the convention.
-    #[clap(long, default_value = "JukeboxV10")]
+    #[clap(long, default_value = "JukeboxV11")]
     pub module_name: String,
 
     /// Aptos address where the module is published. If not given, we
@@ -88,8 +88,8 @@ pub async fn get_current_song_info(
     let track_id = inner
         .get("song_queue")
         .context("No field \"song_queue\" in data")?[0]
-        .get("song")
-        .context("No field \"song\" in current_song")?
+        .get("track_id")
+        .context("No field \"track_id\" in current_song")?
         .as_str()
         .context("song wasn't a string")?
         .to_owned();
@@ -183,29 +183,3 @@ async fn submit_transaction(
 
     Ok(response.into_inner())
 }
-
-/*
-/// For now we just shell out to the CLI
-pub async fn trigger_vote_resolution(
-    module_address: &str,
-    module_name: &str,
-    aptos_cli_config_parent_directory: &PathBuf,
-) -> Result<()> {
-    let function_id = format!("{}::{}::resolve_votes", module_address, module_name);
-    let status = Command::new("aptos")
-        .current_dir(aptos_cli_config_parent_directory)
-        .args([
-            "move",
-            "run",
-            "--max-gas",
-            "10000",
-            "--function-id",
-            &function_id,
-        ])
-        .status()?;
-    if !status.success() {
-        bail!("Command failed with code {:?}", status.code(),);
-    }
-    Ok(())
-}
-*/
