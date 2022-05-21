@@ -4,7 +4,9 @@ import 'package:aptos_infinite_jukebox/constants.dart';
 import 'package:aptos_infinite_jukebox/globals.dart';
 import 'package:aptos_sdk_dart/aptos_client_helper.dart';
 import 'package:aptos_sdk_dart/aptos_sdk_dart.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:spotify/spotify.dart';
 
 import 'common.dart';
 
@@ -22,7 +24,12 @@ class PlaybackManager extends ChangeNotifier {
   bool _outOfSync = false;
   bool currentlySeeking = false;
 
+  List<String>? lastSeenQueue;
+  List<Track>? lastSeenQueueTracks;
+
   Future? unpauseFuture;
+
+  Future? fetchQueueTracksFuture;
 
   PlaybackManager(this.latestConsumedTrack, this.headOfRemoteQueue,
       this.targetTrackStartMilli);
@@ -85,6 +92,13 @@ class PlaybackManager extends ChangeNotifier {
       rawTrackQueue.add(o["song"]!);
     }
 
+    if (!listEquals(lastSeenQueue, rawTrackQueue)) {
+      // Don't wait for this to happen.
+      fetchQueueTracksFuture = updateQueueTracks(rawTrackQueue);
+    }
+
+    lastSeenQueue = rawTrackQueue;
+
     // Store which song is currently at the head of the queue, for the sake
     // of checking that we're in sync.
     headOfRemoteQueue = rawTrackQueue.first;
@@ -109,6 +123,16 @@ class PlaybackManager extends ChangeNotifier {
     }
 
     return newTracks;
+  }
+
+  Future<void> updateQueueTracks(List<String> trackIds) async {
+    if (spotifyApi == null) {
+      return;
+    }
+
+    lastSeenQueueTracks = (await spotifyApi!.tracks.list(trackIds)).toList();
+    notifyListeners();
+    print("Updated tracks, notifying listeners");
   }
 
   // For now we don't handle when the song has ended.

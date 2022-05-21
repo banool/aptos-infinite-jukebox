@@ -194,8 +194,10 @@ class LoggedInPageState extends State<LoggedInPage> {
       debugPrint("noisy: playingCorrectSong: $playingCorrectSong");
       bool withinToleranceForPlaybackPosition =
           getWhetherWithinPlaybackPositionInTolerance(playerState);
-      bool inSync = withinToleranceForPlaybackPosition &&
-          (playingCorrectSong || nearEndOfSong);
+      bool inSync = (withinToleranceForPlaybackPosition &&
+              playingCorrectSong &&
+              !playerState.isPaused) ||
+          nearEndOfSong;
       playbackManager.setOutOfSync(!inSync);
     }
   }

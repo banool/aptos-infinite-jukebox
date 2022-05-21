@@ -32,6 +32,8 @@ class VotingPageState extends State<VotingPage> {
 
   Timer? checkVotesTimer;
 
+  int queueIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +44,13 @@ class VotingPageState extends State<VotingPage> {
       address = AptosAccount.fromPrivateKeyHexString(privateKey!).address;
     }
     initStateAsyncFuture = initStateAsync();
+    // TODO: Only rebuild on queue changes, not out of sync changes.
+    playbackManager.addListener(() {
+      print("Rebuilding because playbackManager changed");
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   Future<void> initStateAsync() async {
@@ -183,6 +192,34 @@ class VotingPageState extends State<VotingPage> {
         });
   }
 
+  Widget buildUpcomingSongsWidget() {
+    if (playbackManager.headOfRemoteQueue == null) {
+      return Text("Tune in to see the track queue");
+    }
+    return FutureBuilder(
+        future: playbackManager.fetchQueueTracksFuture,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return Center(child: CircularProgressIndicator());
+          }
+          return SizedBox(
+              height: 80,
+              child: PageView.builder(
+                itemCount: playbackManager.lastSeenQueueTracks!.length,
+                controller: PageController(viewportFraction: 0.6),
+                onPageChanged: (int index) =>
+                    setState(() => queueIndex = index),
+                itemBuilder: (_, i) {
+                  return Transform.scale(
+                    scale: i == queueIndex ? 1 : 1,
+                    child: buildSongListItem(
+                        playbackManager.lastSeenQueueTracks![i]),
+                  );
+                },
+              ));
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget voteWidget;
@@ -210,6 +247,9 @@ class VotingPageState extends State<VotingPage> {
             padding: EdgeInsets.only(top: 30, bottom: 30),
             child: buildVoteSummaryWidget()),
         Spacer(),
+        Padding(
+            padding: EdgeInsets.only(bottom: 0),
+            child: buildUpcomingSongsWidget()),
         Padding(
             padding: EdgeInsets.only(top: 30, bottom: 30), child: voteWidget),
       ],

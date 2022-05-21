@@ -15,6 +15,27 @@ import 'package:spotify/spotify.dart';
 import 'constants.dart';
 import 'page_selector.dart';
 
+// This input will need to be a spotify track object instead that lets me
+// get an image for the leading piece.
+Widget buildSongListItem(Track track,
+    {void Function()? onPressed, void Function()? onPressedClear}) {
+  Widget? trailing;
+  if (onPressedClear != null) {
+    trailing = IconButton(
+      icon: Icon(Icons.cancel),
+      onPressed: onPressed,
+    );
+  }
+  return Card(
+      child: ListTile(
+    title: Text(track.name ?? "Unknown track name"),
+    subtitle: Text(
+        track.artists?.map((Artist a) => a.name).join(",") ?? "Unknown artist"),
+    trailing: trailing,
+    onTap: onPressed,
+  ));
+}
+
 class MakeVotePage extends StatefulWidget {
   const MakeVotePage({Key? key, required this.pageSelectorController})
       : super(key: key);
@@ -91,37 +112,14 @@ class MakeVotePageState extends State<MakeVotePage> {
     return ListView.builder(
       itemCount: searchResults.length,
       itemBuilder: (context, index) {
-        return ListTile(title: buildSongListItem(searchResults[index]));
+        return ListTile(
+            title: buildSongListItem(searchResults[index], onPressed: () {
+          setState(() {
+            selectedResult = searchResults[index];
+          });
+        }));
       },
     );
-  }
-
-  // This input will need to be a spotify track object instead that lets me
-  // get an image for the leading piece.
-  Widget buildSongListItem(Track track, {bool includeClearButton = false}) {
-    Widget? trailing;
-    if (includeClearButton) {
-      trailing = IconButton(
-        icon: Icon(Icons.cancel),
-        onPressed: () {
-          setState(() {
-            selectedResult = null;
-          });
-        },
-      );
-    }
-    return Card(
-        child: ListTile(
-      title: Text(track.name ?? "Unknown track name"),
-      subtitle: Text(track.artists?.map((Artist a) => a.name).join(",") ??
-          "Unknown artist"),
-      trailing: trailing,
-      onTap: () {
-        setState(() {
-          selectedResult = track;
-        });
-      },
-    ));
   }
 
   Widget buildSearchWidget(BuildContext context) {
@@ -326,7 +324,11 @@ class MakeVotePageState extends State<MakeVotePage> {
       children: [
         Padding(
             padding: EdgeInsets.all(18),
-            child: buildSongListItem(ss, includeClearButton: true)),
+            child: buildSongListItem(ss, onPressedClear: () {
+              setState(() {
+                selectedResult = null;
+              });
+            })),
         // Include some settings here around, e.g. max gas spend,
         // Show the user the current balance of their wallet.
         // Use a futurebuilder but just inline the future here.
