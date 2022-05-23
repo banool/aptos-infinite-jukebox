@@ -27,6 +27,9 @@ jobs:
     # Build the web frontend
     - run: flutter build web
 
+    # Copy in the the Spotify auth callback handler file
+    - run: cp ../site/auth_callback.html build/web
+
     # Zip up the build
     - run: cd build/web && zip -r /tmp/web-release.zip .
 
