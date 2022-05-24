@@ -226,7 +226,6 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
 
-
   # Update the driver infrastructure if necessary. We don't need to set
   # application specific secrets here, those are held in the stack within
   # the directory. The secrets values there are just references to the
@@ -251,6 +250,7 @@ jobs:
       uses: 'google-github-actions/setup-gcloud@v0'
     - run: npm install
     - uses: pulumi/actions@v3
+      id: pulumi  
       with:
         command: up
         stack-name: prod
@@ -259,3 +259,10 @@ jobs:
         PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
         GOOGLE_REGION: ${{ secrets.GCP_REGION }}
+    # Restart the instance running the driver. Currently this job only runs
+    # when the driver is built, which isn't really ideal, it should wait for
+    # the driver build if it happens, but if not, it should just run anyway.
+    # With that in mind, we should only restart the instance when we know
+    # build driver ran succesfully. TODO.
+    - run: gcloud compute instance stop ${{ steps.pulumi.outputs.driverInstanceId }}
+    - run: gcloud compute instance start ${{ steps.pulumi.outputs.driverInstanceId }}

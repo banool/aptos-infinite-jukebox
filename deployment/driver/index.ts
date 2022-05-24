@@ -6,7 +6,12 @@ const cfg = new pulumi.Config()
 const region = gcp.config.region!;
 
 // Build the run command.
-let runCommand = pulumi.all([cfg.requireSecret("account_private_key"), cfg.requireSecret("spotify_client_id"), cfg.requireSecret("spotify_client_secret")]).apply(([account_private_key, spotify_client_id, spotify_client_secret]) => [
+let runCommand = pulumi.all(
+    [
+        cfg.requireSecret("account_private_key"),
+        cfg.requireSecret("spotify_client_id"),
+        cfg.requireSecret("spotify_client_secret")
+    ]).apply(([account_private_key, spotify_client_id, spotify_client_secret]) => [
     "docker",
     "run",
     "--pull", "always",
