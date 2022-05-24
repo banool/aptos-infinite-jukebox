@@ -1,6 +1,7 @@
 # My stuff
 .idea
 .vscode
+gha-creds-*.json
 
 # General
 .DS_Store

@@ -20,5 +20,7 @@ COPY --from=build /build/target/release/driver /bin/driver
 
 RUN apt-get update && apt-get install -y libssl-dev ca-certificates
 
-# Run the driver.
-ENTRYPOINT ["/bin/driver"]
+COPY run_periodically.sh /bin/run_periodically.sh
+
+# Run the driver periodically.
+ENTRYPOINT ["/bin/run_periodically.sh"]

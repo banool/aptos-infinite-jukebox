@@ -1,0 +1,8 @@
+config:
+  driver:account_private_key:
+    secure: AAABAKGQsju/JBLPG82Z9eq2WF8Q+NG1LYVPGGPlrOPLW2qimp0Dja+jemsVVmqUu7DUGO6GiUGNnoBysPPpio6ky2MgJ+Y1elbloASfOfHOfXnXH5aqZXDS6dCz1BHBQRU=
+  driver:spotify_client_id: e02b0452a18948a9a963b35bd4a4f743
+  driver:spotify_client_secret:
+    secure: AAABACoHJdkebo1qQsxuowt7GGprm3SzXFbCJnNsstqub3IVfTAjRIpqLF8SLWk4Oeogme8xH7Lxzqmj1yaMBA==
+  gcp:project: aptos-infinite-jukebox-351118
+  gcp:region: us-west1
