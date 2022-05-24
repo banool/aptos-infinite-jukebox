@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - run: wget https://github.com/aptos-labs/aptos-core/releases/download/cli-latest/aptos-v0.1.0-linux-x86_64.zip -O cli.zip
+    - run: wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v0.1.1/aptos-cli-0.1.1-Ubuntu-x86_64.zip -O cli.zip
     - run: unzip cli.zip
     - run: ./aptos move test
   
@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - run: wget https://github.com/aptos-labs/aptos-core/releases/download/cli-latest/aptos-v0.1.0-linux-x86_64.zip -O cli.zip
+    - run: wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v0.1.1/aptos-cli-0.1.1-Ubuntu-x86_64.zip -O cli.zip
     - run: unzip cli.zip
     - run: yes "" | ./aptos init --assume-yes --private-key ${{ secrets.APTOS_ACCOUNT_PRIVATE_KEY }}
     - run: ./aptos move publish
