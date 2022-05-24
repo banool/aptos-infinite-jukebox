@@ -1,0 +1,49 @@
+# Turns out I don't need this. Google Cloud Run requires that you have your
+# image stored in GCR / GAR, but Cloud Run doesn't actually work very well
+# for the driver (since it doesn't respond to HTTP requests and needs to run
+# more often that Cloud Run Scheduler supports). Compute Engine instances can
+# use any publicly available container repository in addition to its own
+# priate repos, so I just push the image to GHCR as I was doing before.
+
+
+  # Build the driver, push it to GAR (Google Artifact Registry).
+  build_driver:
+    defaults:
+      run:
+        working-directory: ./driver
+    env:
+      IMAGE_NAME: ${{secrets.GCP_REGION}}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/myrepo/aptos-infinite-jukebox-driver
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - run: 
+
+    # Build tags needed for the push to GAR.
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: $IMAGE_NAME
+
+    # Get GCP credentials.
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+
+    # Get the gcloud CLI.
+    - name: 'Get gcloud CLI'
+      uses: 'google-github-actions/setup-gcloud@v0'
+    
+    # Configure docker push with the GCP credentials.
+    - run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+
+    # Push and push to GAR.
+    - uses: docker/build-push-action@v3
+      with:
+        context: "driver"
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+

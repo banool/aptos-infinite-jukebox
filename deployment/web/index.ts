@@ -1,6 +1,11 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as gcp from "@pulumi/gcp";
 
+const cfg = new pulumi.Config()
+
+// Get the deployment location.
+const region = gcp.config.region!;
+
 // Create a GCP resource (Storage Bucket)
 const webBucket = new gcp.storage.Bucket("web-bucket", {
     location: "US",
@@ -58,6 +63,11 @@ const urlMap = new gcp.compute.URLMap("web-url-map", {
     }],
 });
 
+// Create a static IP address.
+const staticIpAddress = new gcp.compute.GlobalAddress("web-static-ip", {});
+
+export const glbIpAddress = staticIpAddress.address;
+
 // Create a Google managed SSL certificate.
 const webManagedSslCertificate = new gcp.compute.ManagedSslCertificate("web-managed-ssl-certificate", {
     managed: {
@@ -68,14 +78,49 @@ const webManagedSslCertificate = new gcp.compute.ManagedSslCertificate("web-mana
 // Route to bucket backend.
 const targetHttpsProxy = new gcp.compute.TargetHttpsProxy("web-target-https-proxy", {
     urlMap: urlMap.id,
-    sslCertificates: [webManagedSslCertificate.id]
+    sslCertificates: [webManagedSslCertificate.id],
 });
 
 // Setup a global load balancer (confusingly called a forwarding rule here).
 const defaultForwardingRule = new gcp.compute.GlobalForwardingRule("web-glb", {
-    target: targetHttpsProxy.selfLink,
+    target: targetHttpsProxy.id,
     portRange: "443",
     ipProtocol: "TCP",
+    loadBalancingScheme: "EXTERNAL_MANAGED",
+    ipAddress: staticIpAddress.id,
 });
 
-export const glbIpAddress = defaultForwardingRule.ipAddress;
+// Map to https glb.
+const httpToHttpsMap = new gcp.compute.URLMap("web-http-to-https-url-map", {
+    hostRules: [{
+        hosts: ["dport.stream"],
+        pathMatcher: "allpaths",
+    }],
+    defaultUrlRedirect: {
+        httpsRedirect: true,
+        stripQuery: false,
+    },
+    pathMatchers: [{
+        name: "allpaths",
+        defaultUrlRedirect: {
+            httpsRedirect: true,
+            stripQuery: false,
+        },
+    }],
+});
+
+// Route to https glb.
+const targetHttpProxy = new gcp.compute.TargetHttpProxy("web-target-http-proxy", {
+    urlMap: httpToHttpsMap.id,
+});
+
+// Setup a partial glb to route http to https.
+const httpToHttpsForwardingRule = new gcp.compute.GlobalForwardingRule("web-http-to-https-glb", {
+    target: targetHttpProxy.id,
+    portRange: "80",
+    ipProtocol: "TCP",
+    loadBalancingScheme: "EXTERNAL_MANAGED",
+    ipAddress: staticIpAddress.id,
+});
+
+pulumi.log.warn("Make sure you setup the domain to point to the GLB IP", staticIpAddress);

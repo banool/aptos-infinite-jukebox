@@ -25,3 +25,5 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+    # Clean up old untagged artifacts.
+    - run: gcloud container images list-tags $IMAGE_NAME --filter "NOT tags:*" --format='get(digest)' | '{print "$IMAGE_NAME@" $1 }' | xargs gcloud container images delete --force-delete-tags
