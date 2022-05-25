@@ -34,6 +34,19 @@ class LoginPageState extends State<LoginPage> {
     initStateAsyncFuture = initStateAsync();
   }
 
+  Future<void> initStateAsync() async {
+    String? accessToken;
+    try {
+      accessToken = readAccessTokenFromStorage();
+    } catch (e) {
+      await sharedPreferences.remove(keySpotifyAccessToken);
+    }
+    if (accessToken != null) {
+      print("Access token found on launch: $accessToken");
+      await connectToSpotify(accessToken);
+    }
+  }
+
   int getNowInSeconds() {
     return DateTime.now().millisecondsSinceEpoch ~/ 1000;
   }
@@ -56,19 +69,6 @@ class LoginPageState extends State<LoginPage> {
       return null;
     }
     return accessToken;
-  }
-
-  Future<void> initStateAsync() async {
-    String? accessToken;
-    try {
-      accessToken = readAccessTokenFromStorage();
-    } catch (e) {
-      await sharedPreferences.remove(keySpotifyAccessToken);
-    }
-    if (accessToken != null) {
-      print("Access token found on launch: $accessToken");
-      await connectToSpotify(accessToken);
-    }
   }
 
   Future<void> handleConnectionError(Object error) async {
@@ -94,9 +94,6 @@ class LoginPageState extends State<LoginPage> {
 
   String? getScope() {
     String? scope;
-    if (onWeb) {
-      // scope = spotifyAccessTokenScope;
-    }
     return scope;
   }
 
@@ -112,13 +109,9 @@ class LoginPageState extends State<LoginPage> {
         redirectUrl: spotifyRedirectUrl,
         scope: getScope(),
       );
-      // Don't bother storing the token on web.
-      if (!onWeb) {
-        await writeAccessTokenToStorage(accessToken);
-      }
+      await writeAccessTokenToStorage(accessToken);
       print("Got new access token");
       await connectToSpotify(accessToken);
-      await SpotifySdk.pause();
       // connectToSpotify will handle the state if it connects correctly,
       // no need to duplicate that logic here.
     } catch (e) {
@@ -136,7 +129,6 @@ class LoginPageState extends State<LoginPage> {
       await SpotifySdk.connectToSpotifyRemote(
         clientId: spotifyClientId,
         redirectUrl: spotifyRedirectUrl,
-        // TOOD: See whether we need this for web.
         scope: getScope(),
         playerName: appTitle,
         accessToken: accessToken,
@@ -146,6 +138,8 @@ class LoginPageState extends State<LoginPage> {
         setState(() {
           connectingInformation = null;
         });
+      } else {
+        widget.pageSelectorController.refresh();
       }
       print("Successfully connected to Spotify");
     } catch (e) {
@@ -178,45 +172,5 @@ class LoginPageState extends State<LoginPage> {
 
     return buildTopLevelScaffold(widget.pageSelectorController, body,
         title: "Login");
-
-    /*
-    Widget widget = StreamBuilder<ConnectionStatus>(
-        stream: SpotifySdk.subscribeConnectionStatus(),
-        builder: (context, snapshot) {
-          if (snapshot.data == null) {
-            return buildWithScaffold(getNoAccessTokenScreen());
-          }
-          ConnectionStatus connectionStatus = snapshot.data!;
-
-          String? errorString;
-          if (connectionStatus.errorCode != null) {
-            errorString =
-                "Error from Spotify SDK: ${connectionStatus.errorCode}: ${connectionStatus.errorDetails}";
-          } else if (connectErrorString != null) {
-            errorString = connectErrorString;
-          }
-
-          if (errorString != null) {
-            return buildWithScaffold(
-                getNoAccessTokenScreen(errorString: errorString));
-          }
-
-          if (!connectionStatus.connected) {
-            // TODO: If there is an access token in storage,
-            // handle that here. Likely it means something went
-            // wrong elsewhere but we didn't wipe the access token.
-            return buildWithScaffold(getNoAccessTokenScreen());
-          } else {
-            if (!tunedIn) {
-              var button = getConnectionButton("Tune in", tuneIn);
-              return buildWithScaffold(button);
-            } else {
-              return PlayerPage(trackAboutToStart, outOfSync, setupPlayer);
-            }
-          }
-        });
-
-    return widget;
-    */
   }
 }

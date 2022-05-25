@@ -9,6 +9,7 @@ const region = gcp.config.region!;
 // Create a GCP resource (Storage Bucket)
 const webBucket = new gcp.storage.Bucket("web-bucket", {
     location: "US",
+    forceDestroy: true,
     website: {
         mainPageSuffix: "index.html"
     },

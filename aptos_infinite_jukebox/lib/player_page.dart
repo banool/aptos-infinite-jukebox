@@ -139,7 +139,7 @@ class _PlayerPageState extends State<PlayerPage> {
 
           if (currentTrackInfo == null ||
               track.imageUri.raw != currentTrackInfo!.imageUriRaw) {
-            print("Getting new image");
+            print("Getting new image: ${track.imageUri.raw}");
             var loadImageFuture = SpotifySdk.getImage(
               imageUri: track.imageUri,
               dimension: desiredImageDimension,

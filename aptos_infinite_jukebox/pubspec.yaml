@@ -3,10 +3,11 @@ description: An Infinite Jukebox powered by Aptos
 
 publish_to: none
 
-version: 1.0.142+143
+version: 1.0.147+148
 
 environment:
   sdk: ">=2.16.2 <3.0.0"
+  flutter: ">=3.0.1"
 
 dependencies:
   aptos_sdk_dart:

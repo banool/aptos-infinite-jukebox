@@ -1,6 +1,8 @@
 import 'package:aptos_infinite_jukebox/player_selector.dart';
 import 'package:aptos_infinite_jukebox/voting_page.dart';
 import 'package:flutter/material.dart';
+import 'package:spotify_sdk/models/connection_status.dart';
+import 'package:spotify_sdk/spotify_sdk.dart';
 
 import 'constants.dart';
 import 'settings_page.dart';
@@ -109,7 +111,37 @@ class PageSelectorState extends State<PageSelector> {
 
   @override
   Widget build(BuildContext context) {
-    return controller.getCurrentScaffold();
+    return StreamBuilder<ConnectionStatus>(
+        stream: SpotifySdk.subscribeConnectionStatus(),
+        builder: (context, snapshot) {
+          return InheritedSpotifyConnectionStatus(
+              connectionStatus: snapshot.data,
+              child: controller.getCurrentScaffold());
+        });
+  }
+}
+
+// This helps us keep the ConnectionStatus at the root of the tree while
+// allowing children to access it easily without passing it down.
+class InheritedSpotifyConnectionStatus extends InheritedWidget {
+  final ConnectionStatus? connectionStatus;
+
+  const InheritedSpotifyConnectionStatus(
+      {required this.connectionStatus, required Widget child, Key? key})
+      : super(child: child, key: key);
+
+  @override
+  bool updateShouldNotify(InheritedSpotifyConnectionStatus oldWidget) {
+    if (connectionStatus != oldWidget.connectionStatus) {
+      return true;
+    }
+    return false;
+  }
+
+  static InheritedSpotifyConnectionStatus of(BuildContext context) {
+    final InheritedSpotifyConnectionStatus? result = context
+        .dependOnInheritedWidgetOfExactType<InheritedSpotifyConnectionStatus>();
+    return result!;
   }
 }
 

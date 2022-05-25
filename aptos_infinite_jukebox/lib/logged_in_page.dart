@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
@@ -172,6 +173,12 @@ class LoggedInPageState extends State<LoggedInPage> {
   }
 
   Future<void> checkWhetherInSync() async {
+    // Assume we're out of sync if we don't know what song we're meant to be
+    // playing.
+    if (playbackManager.headOfRemoteQueue == null) {
+      playbackManager.setOutOfSync(true);
+      return;
+    }
     PlayerState? playerState;
     try {
       playerState = await SpotifySdk.getPlayerState();
@@ -324,6 +331,15 @@ class LoggedInPageState extends State<LoggedInPage> {
       playbackManager.setOutOfSync(false);
       settingUpQueue = true;
     });
+
+    // The web endpoints explode if nothing is playing before you try to
+    // manipulate the queue unless you don't specify a player to use, which
+    // it opts to do in case there is no other player active. For this we
+    // use another silent track not in the standard set. We do this for all
+    // devices though, not just web, because it can't hurt.
+    await SpotifySdk.play(spotifyUri: "spotify:track:7IP2ZGoZd8y0CelITiMG1m");
+    print("Started playing special track to activate player");
+    await Future.delayed(spotifyActionDelay);
 
     // Clear the queue, leaving the dummy track playing. Pause if necessary.
     await clearQueue();
