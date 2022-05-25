@@ -8,6 +8,7 @@ import 'package:spotify_sdk/spotify_sdk.dart';
 
 import 'common.dart';
 import 'constants.dart';
+import 'playback_manager.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key, required this.pageSelectorController})
@@ -76,7 +77,7 @@ class LoginPageState extends State<LoginPage> {
     if (mounted) {
       setState(() {
         connectingInformation = null;
-        widget.pageSelectorController.tunedInState = TunedInState.tunedOut;
+        playbackManager.setTunedInState(TunedInState.tunedOut);
       });
     }
     await showDialog(

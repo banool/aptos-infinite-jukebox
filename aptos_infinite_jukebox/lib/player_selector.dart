@@ -2,8 +2,8 @@ import 'package:aptos_infinite_jukebox/login_page.dart';
 import 'package:aptos_infinite_jukebox/page_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:spotify_sdk/models/connection_status.dart';
-import 'package:spotify_sdk/spotify_sdk.dart';
 
+import 'globals.dart';
 import 'logged_in_page.dart';
 
 class PlayerSelector extends StatefulWidget {
@@ -17,6 +17,17 @@ class PlayerSelector extends StatefulWidget {
 }
 
 class PlayerSelectorState extends State<PlayerSelector> {
+  @override
+  void initState() {
+    playbackManager.addListener(() {
+      print("Rebuilding PlayerSelector because playbackManager changed");
+      if (mounted) {
+        setState(() {});
+      }
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     ConnectionStatus? connectionStatus =

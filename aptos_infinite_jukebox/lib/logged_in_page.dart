@@ -1,18 +1,14 @@
 import 'dart:async';
-import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/spotify_sdk.dart';
 
 import 'common.dart';
+import 'constants.dart';
 import 'globals.dart';
 import 'page_selector.dart';
 import 'playback_manager.dart';
 import 'player_page.dart';
-
-const Duration spotifyActionDelay = Duration(milliseconds: 1000);
 
 class LoggedInPage extends StatefulWidget {
   const LoggedInPage({Key? key, required this.pageSelectorController})
@@ -28,36 +24,25 @@ class LoggedInPageState extends State<LoggedInPage> {
   bool trackAboutToStart = false;
 
   Timer? updateQueueTimer;
-  Timer? resyncAndCheckTimer;
-
-  // This is only used for display purposes.
-  int? secondsUntilUnpause;
 
   bool settingUpQueue = false;
 
   Future<void> tuneIn() async {
     print("Tuning in");
-    setState(() {
-      widget.pageSelectorController.tunedInState = TunedInState.tuningIn;
-    });
+    playbackManager.setTunedInState(TunedInState.tuningIn);
     try {
       await setupPlayer();
-      setState(() {
-        widget.pageSelectorController.tunedInState = TunedInState.tunedIn;
-      });
+      playbackManager.setTunedInState(TunedInState.tunedIn);
       startUpdateQueueTimer();
     } catch (e) {
-      setState(() {
-        widget.pageSelectorController.tunedInState = TunedInState.tunedOut;
-      });
+      playbackManager.setTunedInState(TunedInState.tunedOut);
     }
   }
 
   void startUpdateQueueTimer() {
     setState(() {
       updateQueueTimer = Timer.periodic(Duration(seconds: 10), (timer) async {
-        if (widget.pageSelectorController.tunedInState ==
-            TunedInState.tunedOut) {
+        if (playbackManager.tunedInState == TunedInState.tunedOut) {
           print("Tuned out, cancelling timer");
           timer.cancel();
           return;
@@ -66,147 +51,6 @@ class LoggedInPageState extends State<LoggedInPage> {
         await updateQueue();
       });
     });
-  }
-
-  void startResyncAndCheckTimer() {
-    setState(() {
-      resyncAndCheckTimer =
-          Timer.periodic(Duration(milliseconds: 200), (timer) async {
-        if (widget.pageSelectorController.tunedInState ==
-            TunedInState.tunedOut) {
-          print("Tuned out, cancelling timer");
-          timer.cancel();
-          return;
-        }
-        debugPrint("noisy: Resyncing if necessary then checking sync status");
-        await resyncAndCheck();
-      });
-    });
-  }
-
-  bool getWhetherPlayingCorrectSong(PlayerState playerState) {
-    bool playingCorrectSong = true;
-    if (playerState.track != null &&
-        playbackManager.headOfRemoteQueue != null) {
-      playingCorrectSong =
-          playerState.track!.uri.endsWith(playbackManager.headOfRemoteQueue!);
-    }
-    return playingCorrectSong;
-  }
-
-  bool getWhetherWithinPlaybackPositionInTolerance(PlayerState playerState) {
-    int targetPosition = playbackManager.getTargetPlaybackPosition();
-    int actualPosition = playerState.playbackPosition;
-    bool withinToleranceForPlaybackPosition =
-        (targetPosition - actualPosition).abs() < outOfSyncThresholdMilli;
-    debugPrint(
-        "noisy: withinToleranceForPlaybackPosition: $withinToleranceForPlaybackPosition (defined as abs($targetPosition - $actualPosition) < $outOfSyncThresholdMilli)");
-    return withinToleranceForPlaybackPosition;
-  }
-
-  // Returns true if it did anything.
-  Future<bool> resyncIfSongCorrectAtWrongPlaybackPosition() async {
-    if (playbackManager.unpauseFuture != null) {
-      debugPrint(
-          "noisy: There is already an unpause future, doing nothing to resync playback position");
-      return false;
-    }
-    if (playbackManager.currentlySeeking) {
-      debugPrint("noisy: We're seeking right now, doing nothing to resync");
-      return false;
-    }
-    PlayerState? playerState;
-    try {
-      playerState = await SpotifySdk.getPlayerState();
-    } catch (e) {
-      debugPrint(
-          "noisy: Failed to get player state for trying to sync up playback position: $e");
-      return false;
-    }
-    if (!getWhetherPlayingCorrectSong(playerState!)) {
-      debugPrint("noisy: Playing wrong song, will not attempt to auto sync");
-      return false;
-    }
-    if (getWhetherWithinPlaybackPositionInTolerance(playerState)) {
-      debugPrint("noisy: Playback position within tolerance, not auto syncing");
-      return false;
-    }
-    int target = playbackManager.getTargetPlaybackPosition();
-    if (target < 0) {
-      int sleepAmount = -target;
-      print(
-          "We're ahead of the correct position, pausing for $sleepAmount milliseconds");
-      await SpotifySdk.pause();
-      setState(() {
-        playbackManager.unpauseFuture =
-            Future.delayed(Duration(milliseconds: sleepAmount), (() async {
-          await SpotifySdk.resume();
-          print("Resumed playback after $sleepAmount milliseconds");
-          setState(() {
-            playbackManager.unpauseFuture = null;
-          });
-          await Future.delayed(spotifyActionDelay * 5);
-        }));
-        secondsUntilUnpause = min(sleepAmount ~/ 1000, 1);
-      });
-      Timer.periodic(Duration(seconds: 1), (timer) {
-        setState(() {
-          if (secondsUntilUnpause == null) {
-            timer.cancel();
-            return;
-          }
-          secondsUntilUnpause = secondsUntilUnpause! - 1;
-          if (secondsUntilUnpause == 0) {
-            secondsUntilUnpause = null;
-          }
-        });
-      });
-    } else {
-      print(
-          "Playing the correct song but behind the correct position, automatically seeking to the correct spot");
-      playbackManager.currentlySeeking = true;
-      await SpotifySdk.seekTo(positionedMilliseconds: target);
-      await Future.delayed(spotifyActionDelay * 5);
-      playbackManager.currentlySeeking = false;
-    }
-    return true;
-  }
-
-  Future<void> checkWhetherInSync() async {
-    // Assume we're out of sync if we don't know what song we're meant to be
-    // playing.
-    if (playbackManager.headOfRemoteQueue == null) {
-      playbackManager.setOutOfSync(true);
-      return;
-    }
-    PlayerState? playerState;
-    try {
-      playerState = await SpotifySdk.getPlayerState();
-    } catch (e) {
-      debugPrint(
-          "noisy: Failed to get player state when checking sync state: $e");
-      return;
-    }
-    if (playerState != null) {
-      // With the way the voting works, the player will somtimes say it is
-      // out of sync near the end of a song, since the head will have updated
-      // but we're still finishing off the previous song. If we're in the last
-      // x seconds of the song, we just assume we're in sync.
-      bool nearEndOfSong = false;
-      if (playerState.track != null) {
-        nearEndOfSong =
-            playerState.track!.duration - playerState.playbackPosition < 20000;
-      }
-      bool playingCorrectSong = getWhetherPlayingCorrectSong(playerState);
-      debugPrint("noisy: playingCorrectSong: $playingCorrectSong");
-      bool withinToleranceForPlaybackPosition =
-          getWhetherWithinPlaybackPositionInTolerance(playerState);
-      bool inSync = (withinToleranceForPlaybackPosition &&
-              playingCorrectSong &&
-              !playerState.isPaused) ||
-          nearEndOfSong;
-      playbackManager.setOutOfSync(!inSync);
-    }
   }
 
   /// Call this function periodically to ensure that new songs are added to
@@ -218,22 +62,6 @@ class LoggedInPageState extends State<LoggedInPage> {
       await SpotifySdk.queue(spotifyUri: spotifyUri);
       await Future.delayed(spotifyActionDelay);
       print("Added track to queue: $spotifyUri");
-    }
-  }
-
-  /// Call this function periodically to make sure that if we're out of
-  /// tolerance of the playback position on the correct track, we resync, which
-  /// includes potentially pausing to wait for the new song to start, and then
-  /// check the sync status.
-  Future<void> resyncAndCheck() async {
-    bool resynced = await resyncIfSongCorrectAtWrongPlaybackPosition();
-    if (resynced) {
-      resyncAndCheckTimer?.cancel();
-      await Future.delayed(Duration(seconds: 5), (() {
-        startResyncAndCheckTimer();
-      }));
-    } else {
-      await checkWhetherInSync();
     }
   }
 
@@ -296,12 +124,12 @@ class LoggedInPageState extends State<LoggedInPage> {
 
     // Confirm our sync status, which will invoke a UI re-render to display
     // said status to the user.
-    await checkWhetherInSync();
+    await playbackManager.checkWhetherInSync();
 
     // Start the timers for updating the queue and checking sync status.
     await Future.delayed(spotifyActionDelay);
     startUpdateQueueTimer();
-    startResyncAndCheckTimer();
+    playbackManager.startResyncAndCheckTimer();
   }
 
   // TODO: There seems to be a bug where we skip a song in the queue for some reason.
@@ -321,7 +149,7 @@ class LoggedInPageState extends State<LoggedInPage> {
     print("Setting up player afresh");
 
     updateQueueTimer?.cancel();
-    resyncAndCheckTimer?.cancel();
+    playbackManager.resyncAndCheckTimer?.cancel();
 
     playbackManager.headOfRemoteQueue = null;
     playbackManager.latestConsumedTrack = null;
@@ -358,7 +186,7 @@ class LoggedInPageState extends State<LoggedInPage> {
     // Start the timers for checking the queue and sync status. We don't
     // explicitly try to sync up our playback status here, we let these timers
     // do it instead.
-    startResyncAndCheckTimer();
+    playbackManager.startResyncAndCheckTimer();
     startUpdateQueueTimer();
   }
 
@@ -373,7 +201,7 @@ class LoggedInPageState extends State<LoggedInPage> {
     }
 
     List<Widget> children = [];
-    switch (widget.pageSelectorController.tunedInState) {
+    switch (playbackManager.tunedInState) {
       case TunedInState.tunedOut:
         children += [getConnectionButton("Tune in!", tuneIn)];
         break;
@@ -386,7 +214,7 @@ class LoggedInPageState extends State<LoggedInPage> {
         break;
       case TunedInState.tunedIn:
         return PlayerPage(widget.pageSelectorController, setupPlayer,
-            settingUpQueue, secondsUntilUnpause);
+            settingUpQueue, playbackManager.secondsUntilUnpause);
     }
 
     Widget body = Center(
@@ -401,7 +229,7 @@ class LoggedInPageState extends State<LoggedInPage> {
   @override
   void dispose() {
     updateQueueTimer?.cancel();
-    resyncAndCheckTimer?.cancel();
+    playbackManager.resyncAndCheckTimer?.cancel();
     super.dispose();
   }
 }

@@ -21,12 +21,6 @@ class TabInformation {
   TabInformation(this.bottomNavBarItem, this.tabBody);
 }
 
-enum TunedInState {
-  tunedOut,
-  tuningIn,
-  tunedIn,
-}
-
 // This class contains information that only makes sense to be stored
 // above each tab. This includes stuff that needs to remembered between
 // each tab, since they lose their state when tabbing between each.
@@ -38,7 +32,6 @@ class PageSelectorController {
   late int currentNavBarIndex;
   late List<TabInformation> tabs;
   late void Function() refresh;
-  TunedInState tunedInState = TunedInState.tunedOut;
 
   void goToTab(int index) {
     currentNavBarIndex = index;
