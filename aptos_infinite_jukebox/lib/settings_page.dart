@@ -324,6 +324,10 @@ class BuildInformationPage extends StatelessWidget {
                 "Build signature: ${packageInfo.buildSignature}\n",
                 textAlign: TextAlign.center,
               ),
+              Text(
+                "Jukebox icons created by Freekpik: - Flaticon: https://www.flaticon.com/free-icons/jukebox\n",
+                textAlign: TextAlign.center,
+              ),
             ])));
     return buildTopLevelScaffold(pageSelectorController, body,
         title: "Build Information", isSubPage: true);

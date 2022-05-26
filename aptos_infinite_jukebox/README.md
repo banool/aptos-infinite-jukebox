@@ -7,7 +7,7 @@ This is done automatically via Github Actions.
 Currently this must be done manually:
 ```
 flutter pub get
-flutter pub run flutter_launcher_icons:main
+flutter pub run icons_launcher:create
 flutter build ios --release --no-codesign
 cd ios && ./publish.sh
 ```
