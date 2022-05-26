@@ -29,4 +29,4 @@ const String defaultModuleAddress =
 const String defaultModuleName = "JukeboxV15";
 const String? defaultPrivateKey = null;
 
-const Duration spotifyActionDelay = Duration(milliseconds: 1000);
+const Duration spotifyActionDelay = Duration(milliseconds: 500);

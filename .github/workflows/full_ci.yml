@@ -205,6 +205,8 @@ jobs:
 
   # Build the driver, push it to GHCR.
   build_driver:
+    needs: [changes]
+    if: needs.changes.outputs.driver == 'true'
     defaults:
       run:
         working-directory: ./driver

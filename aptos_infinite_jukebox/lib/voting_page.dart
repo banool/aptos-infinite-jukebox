@@ -202,6 +202,10 @@ class VotingPageState extends State<VotingPage> {
           if (snapshot.connectionState != ConnectionState.done) {
             return Center(child: CircularProgressIndicator());
           }
+          if (snapshot.error != null) {
+            return Text(
+                "Error fetching upcoming track info: ${snapshot.error}");
+          }
           return SizedBox(
               height: 80,
               child: PageView.builder(
@@ -223,8 +227,7 @@ class VotingPageState extends State<VotingPage> {
   @override
   Widget build(BuildContext context) {
     Widget voteWidget;
-    String? privateKeyRaw = sharedPreferences.getString(keyPrivateKey);
-    if (privateKeyRaw == null || privateKeyRaw == "") {
+    if (privateKey == null) {
       voteWidget = buildVoteWidgetNotLoggedIn(
           "You must set the private key for your Aptos account in order to vote.",
           "Go to Settings",

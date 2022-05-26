@@ -215,17 +215,17 @@ class _PlayerPageState extends State<PlayerPage> {
 
   String getRandomTitle() {
     return ([
-          "Sitting pretty",
-          "Tuned in",
-          "Keeping it cool",
-          "Vibing out",
-          "Jamming out",
-          "Getting hyped",
-          "Popping off",
-          "Straight chilling"
-        ]..shuffle())
-            .first +
-        "...";
+      "Sitting pretty",
+      "Tuned in",
+      "Keeping it cool",
+      "Vibing out",
+      "Jamming out",
+      "Getting hyped",
+      "Popping off",
+      "Straight chilling",
+      "Laying low"
+    ]..shuffle())
+        .first;
   }
 
   // Here we assume ConnectionStatus.connected of SpotifySdk is true.
@@ -241,12 +241,10 @@ class _PlayerPageState extends State<PlayerPage> {
           future: SpotifySdk.getPlayerState(),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
-              return buildTopLevelScaffold(
-                  widget.pageSelectorController,
-                  Padding(
-                    padding: EdgeInsets.all(40),
-                    child: getCircularLoadingBox(),
-                  ));
+              return Padding(
+                padding: EdgeInsets.all(40),
+                child: getCircularLoadingBox(),
+              );
             }
             return buildWithPlayerState(context, snapshot.data!);
           });
@@ -255,12 +253,10 @@ class _PlayerPageState extends State<PlayerPage> {
           stream: SpotifySdk.subscribePlayerState(),
           builder: (context, snapshot) {
             if (snapshot.data == null) {
-              return buildTopLevelScaffold(
-                  widget.pageSelectorController,
-                  Padding(
-                    padding: EdgeInsets.all(40),
-                    child: getCircularLoadingBox(),
-                  ));
+              return Padding(
+                padding: EdgeInsets.all(40),
+                child: getCircularLoadingBox(),
+              );
             }
             return buildWithPlayerState(context, snapshot.data!);
           });
