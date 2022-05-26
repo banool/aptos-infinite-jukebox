@@ -302,7 +302,7 @@ class PlaybackManager extends ChangeNotifier {
 
   void startResyncAndCheckTimer() {
     resyncAndCheckTimer =
-        Timer.periodic(Duration(milliseconds: 200), (timer) async {
+        Timer.periodic(Duration(milliseconds: 250), (timer) async {
       if (tunedInState == TunedInState.tunedOut) {
         print("Tuned out, cancelling timer");
         timer.cancel();

@@ -57,10 +57,18 @@ class _PlayerPageState extends State<PlayerPage> {
 
   Future<void> initStateAsync() async {}
 
+  Widget getCircularLoadingBox() {
+    return SizedBox(
+      width: desiredImageDimension.value.toDouble(),
+      height: desiredImageDimension.value.toDouble(),
+      child: const CircularProgressIndicator(),
+    );
+  }
+
   Widget getSpotifyImageWidget() {
     if (widget.settingUpQueue) {
       // Don't bother fetching images while setting up the queue.
-      return CircularProgressIndicator();
+      return getCircularLoadingBox();
     }
     return FutureBuilder(
         future: currentTrackInfo!.loadImageFuture,
@@ -80,11 +88,7 @@ class _PlayerPageState extends State<PlayerPage> {
                   )
                 ])));
           } else {
-            return SizedBox(
-              width: desiredImageDimension.value.toDouble(),
-              height: desiredImageDimension.value.toDouble(),
-              child: const CircularProgressIndicator(),
-            );
+            return getCircularLoadingBox();
           }
         });
   }
@@ -122,7 +126,7 @@ class _PlayerPageState extends State<PlayerPage> {
           if (snapshot.data == null) {
             return Padding(
               padding: EdgeInsets.all(30),
-              child: CircularProgressIndicator(),
+              child: getCircularLoadingBox(),
             );
           }
           PlayerState playerState = snapshot.data!;
@@ -131,7 +135,7 @@ class _PlayerPageState extends State<PlayerPage> {
             // Just defensive, we should never hit this state.
             return Padding(
               padding: EdgeInsets.all(30),
-              child: CircularProgressIndicator(),
+              child: getCircularLoadingBox(),
             );
           }
 
