@@ -5,6 +5,7 @@ import 'package:aptos_infinite_jukebox/constants.dart';
 import 'package:aptos_infinite_jukebox/globals.dart';
 import 'package:aptos_sdk_dart/aptos_client_helper.dart';
 import 'package:aptos_sdk_dart/aptos_sdk_dart.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:spotify/spotify.dart';
 import 'package:spotify_sdk/models/player_state.dart';
@@ -89,8 +90,8 @@ class PlaybackManager extends ChangeNotifier {
     print("Getting latest queue from blockchain");
 
     // Get the information from the account.
-    AptosClientHelper aptosClientHelper =
-        AptosClientHelper.fromBaseUrl(aptosNodeUrl);
+    Dio dio = Dio(BaseOptions(baseUrl: aptosNodeUrl));
+    AptosClientHelper aptosClientHelper = AptosClientHelper.fromDio(dio);
     AccountResource resource;
     try {
       resource = await unwrapClientCall(aptosClientHelper.client

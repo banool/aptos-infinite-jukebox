@@ -39,9 +39,11 @@ class PlayerSelectorState extends State<PlayerSelector> {
 
     Widget page;
     if (connectionStatus.connected) {
+      print("Building LoggedInPage");
       page =
           LoggedInPage(pageSelectorController: widget.pageSelectorController);
     } else {
+      print("Building LoginPage");
       page = LoginPage(pageSelectorController: widget.pageSelectorController);
     }
 

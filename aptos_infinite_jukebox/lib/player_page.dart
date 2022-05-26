@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:aptos_infinite_jukebox/constants.dart';
 import 'package:aptos_infinite_jukebox/globals.dart';
 import 'package:aptos_infinite_jukebox/page_selector.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:spotify_sdk/models/player_state.dart';
 import 'package:spotify_sdk/models/track.dart';
@@ -117,109 +118,139 @@ class _PlayerPageState extends State<PlayerPage> {
             )));
   }
 
-  // Here we assume ConnectionStatus.connected of SpotifySdk is true.
-  @override
-  Widget build(BuildContext context) {
-    Widget body = StreamBuilder<PlayerState>(
-        stream: SpotifySdk.subscribePlayerState(),
-        builder: (context, snapshot) {
-          if (snapshot.data == null) {
-            return Padding(
-              padding: EdgeInsets.all(30),
-              child: getCircularLoadingBox(),
-            );
-          }
-          PlayerState playerState = snapshot.data!;
+  Widget buildWithPlayerState(BuildContext context, PlayerState playerState) {
+    if (playerState.track == null) {
+      // Just defensive, we should never hit this state.
+      return Padding(
+        padding: EdgeInsets.all(30),
+        child: getCircularLoadingBox(),
+      );
+    }
 
-          if (playerState.track == null) {
-            // Just defensive, we should never hit this state.
-            return Padding(
-              padding: EdgeInsets.all(30),
-              child: getCircularLoadingBox(),
-            );
-          }
+    Track track = playerState.track!;
 
-          Track track = playerState.track!;
+    if (currentTrackInfo == null ||
+        track.imageUri.raw != currentTrackInfo!.imageUriRaw) {
+      print("Getting new image: ${track.imageUri.raw}");
+      var loadImageFuture = SpotifySdk.getImage(
+        imageUri: track.imageUri,
+        dimension: desiredImageDimension,
+      );
+      currentTrackInfo = CurrentTrackInfo(track.imageUri.raw, loadImageFuture);
+    }
 
-          if (currentTrackInfo == null ||
-              track.imageUri.raw != currentTrackInfo!.imageUriRaw) {
-            print("Getting new image: ${track.imageUri.raw}");
-            var loadImageFuture = SpotifySdk.getImage(
-              imageUri: track.imageUri,
-              dimension: desiredImageDimension,
-            );
-            currentTrackInfo =
-                CurrentTrackInfo(track.imageUri.raw, loadImageFuture);
-          }
+    List<Widget> children = [
+      Text(
+        widget.settingUpQueue ? "" : track.name,
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+        textAlign: TextAlign.center,
+      ),
+      Text(
+        widget.settingUpQueue ? "" : track.artist.name ?? "Unknown arist",
+        style: TextStyle(fontSize: 20),
+        textAlign: TextAlign.center,
+      ),
+      Padding(padding: EdgeInsets.only(top: 15)),
+      Expanded(child: getSpotifyImageWidget()),
+      Padding(padding: EdgeInsets.only(top: 30)),
+    ];
 
-          List<Widget> children = [
-            Text(
-              widget.settingUpQueue ? "" : track.name,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-              textAlign: TextAlign.center,
-            ),
-            Text(
-              widget.settingUpQueue ? "" : track.artist.name ?? "Unknown arist",
-              style: TextStyle(fontSize: 20),
-              textAlign: TextAlign.center,
-            ),
-            Padding(padding: EdgeInsets.only(top: 15)),
-            Expanded(child: getSpotifyImageWidget()),
-            Padding(padding: EdgeInsets.only(top: 30)),
-            PlaybackIndicator(
-              initialPosition: playerState.playbackPosition,
-              trackDuration: track.duration,
-              playbackSpeed: playerState.playbackSpeed,
-              isPaused: playerState.isPaused,
-            ),
-          ];
+    if (!kIsWeb) {
+      // The web playback SDK doesn't actually expose the track duration,
+      // so we can't easily show the playback progress bar unless we
+      // make another call to fetch the track duration.
+      children += [
+        PlaybackIndicator(
+          initialPosition: playerState.playbackPosition,
+          trackDuration: track.duration,
+          playbackSpeed: playerState.playbackSpeed,
+          isPaused: playerState.isPaused,
+        )
+      ];
+    }
 
-          Widget syncButton;
-          if (widget.settingUpQueue) {
-            syncButton = getSyncButton(
-                "Syncing up...", Colors.transparent, Colors.lightBlue,
-                includeBorder: false);
-          } else if (widget.secondsUntilUnpause != null) {
-            syncButton = getSyncButton(
-                "Next song starting in ${widget.secondsUntilUnpause}...",
-                Colors.transparent,
-                Colors.lightBlue,
-                includeBorder: false);
-          } else if (playbackManager.outOfSync) {
-            syncButton =
-                getSyncButton("Out of sync, sync up?", Colors.white, Colors.red,
-                    onPressed: () async {
-              print("Syncing up...");
-              await widget.setupPlayer();
-              print("Synced up!");
-            });
-          } else {
-            syncButton = getSyncButton(
-                "In sync!", Colors.transparent, Colors.lightGreen,
-                includeBorder: false);
-          }
-          children.add(Padding(padding: EdgeInsets.only(top: 20)));
-          children.add(syncButton);
+    Widget syncButton;
+    if (widget.settingUpQueue) {
+      syncButton = getSyncButton(
+          "Syncing up...", Colors.transparent, Colors.lightBlue,
+          includeBorder: false);
+    } else if (widget.secondsUntilUnpause != null) {
+      syncButton = getSyncButton(
+          "Next song starting in ${widget.secondsUntilUnpause}...",
+          Colors.transparent,
+          Colors.lightBlue,
+          includeBorder: false);
+    } else if (playbackManager.outOfSync) {
+      syncButton =
+          getSyncButton("Out of sync, sync up?", Colors.white, Colors.red,
+              onPressed: () async {
+        print("Syncing up...");
+        await widget.setupPlayer();
+        print("Synced up!");
+      });
+    } else {
+      syncButton = getSyncButton(
+          "In sync!", Colors.transparent, Colors.lightGreen,
+          includeBorder: false);
+    }
+    children.add(Padding(padding: EdgeInsets.only(top: 20)));
+    children.add(syncButton);
 
-          if (playbackManager.outOfSync) {
-            children.add(Padding(padding: EdgeInsets.only(top: 20)));
-            children.add(Text(
-              "If resyncing doesn't seem to work, check out the FAQ under the Settings tab for tips on resolving common issues.",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12),
-            ));
-          }
+    if (playbackManager.outOfSync) {
+      children.add(Padding(padding: EdgeInsets.only(top: 20)));
+      children.add(Text(
+        "If resyncing doesn't seem to work, check out the FAQ under the Settings tab for tips on resolving common issues.",
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 12),
+      ));
+    }
 
-          return Padding(
-              padding: EdgeInsets.all(30),
-              child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: children));
-        });
+    var body = Padding(
+        padding: EdgeInsets.all(30),
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.center, children: children));
 
     return buildTopLevelScaffold(
         widget.pageSelectorController, Center(child: body),
         title: "Tuned in!");
+  }
+
+  // Here we assume ConnectionStatus.connected of SpotifySdk is true.
+  // On web, if you tab away and tab back, subscribePlayerState just returns
+  // null forever. Instead we await getPlayerState.
+  @override
+  Widget build(BuildContext context) {
+    Widget body;
+    if (kIsWeb) {
+      body = FutureBuilder(
+          future: SpotifySdk.getPlayerState(),
+          builder: (BuildContext context, AsyncSnapshot snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return buildTopLevelScaffold(
+                  widget.pageSelectorController,
+                  Padding(
+                    padding: EdgeInsets.all(40),
+                    child: getCircularLoadingBox(),
+                  ));
+            }
+            return buildWithPlayerState(context, snapshot.data!);
+          });
+    } else {
+      body = StreamBuilder<PlayerState>(
+          stream: SpotifySdk.subscribePlayerState(),
+          builder: (context, snapshot) {
+            if (snapshot.data == null) {
+              return buildTopLevelScaffold(
+                  widget.pageSelectorController,
+                  Padding(
+                    padding: EdgeInsets.all(40),
+                    child: getCircularLoadingBox(),
+                  ));
+            }
+            return buildWithPlayerState(context, snapshot.data!);
+          });
+    }
+    return body;
   }
 }
 
