@@ -268,23 +268,24 @@ class LegalInformationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget body = Padding(
-        padding: EdgeInsets.only(bottom: 10, left: 20, right: 32, top: 20),
-        child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            mainAxisSize: MainAxisSize.max,
-            children: const [
-              Text(
-                  "This app is the sole work of the developer. "
-                  "It is in no way affiliated with Aptos Labs / Matonee.\n",
-                  textAlign: TextAlign.center),
-              Text(
-                  "The author of this app accepts no responsibility for its "
-                  "use. As it stands now, the app is designed for use with "
-                  "the Aptos dev / test networks. It should not be used with "
-                  "the main network when it launches in its current state.",
-                  textAlign: TextAlign.center),
-            ]));
+    Widget body = Center(
+        child: Padding(
+            padding: EdgeInsets.only(bottom: 10, left: 20, right: 32, top: 20),
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisSize: MainAxisSize.max,
+                children: const [
+                  Text(
+                      "This app is the sole work of the developer. "
+                      "It is in no way affiliated with Aptos Labs / Matonee.\n",
+                      textAlign: TextAlign.center),
+                  Text(
+                      "The author of this app accepts no responsibility for its "
+                      "use. As it stands now, the app is designed for use with "
+                      "the Aptos dev / test networks. It should not be used with "
+                      "the main network when it launches in its current state.",
+                      textAlign: TextAlign.center),
+                ])));
     return buildTopLevelScaffold(pageSelectorController, body,
         title: "Legal Information", isSubPage: true);
   }
@@ -298,30 +299,32 @@ class BuildInformationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget body = Padding(
-        padding: EdgeInsets.only(bottom: 10, left: 20, right: 32, top: 20),
-        child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
-          Text(
-            "App name: ${packageInfo.appName}\n",
-            textAlign: TextAlign.center,
-          ),
-          Text(
-            "Package name: ${packageInfo.packageName}\n",
-            textAlign: TextAlign.center,
-          ),
-          Text(
-            "Version: ${packageInfo.version}\n",
-            textAlign: TextAlign.center,
-          ),
-          Text(
-            "Build number: ${packageInfo.buildNumber}\n",
-            textAlign: TextAlign.center,
-          ),
-          Text(
-            "Build signature: ${packageInfo.buildSignature}\n",
-            textAlign: TextAlign.center,
-          ),
-        ]));
+    Widget body = Center(
+        child: Padding(
+            padding: EdgeInsets.only(bottom: 10, left: 20, right: 32, top: 20),
+            child:
+                Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+              Text(
+                "App name: ${packageInfo.appName}\n",
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                "Package name: ${packageInfo.packageName}\n",
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                "Version: ${packageInfo.version}\n",
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                "Build number: ${packageInfo.buildNumber}\n",
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                "Build signature: ${packageInfo.buildSignature}\n",
+                textAlign: TextAlign.center,
+              ),
+            ])));
     return buildTopLevelScaffold(pageSelectorController, body,
         title: "Build Information", isSubPage: true);
   }

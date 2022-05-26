@@ -8,11 +8,18 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aptos_infinite_jukebox/main.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
+    PackageInfo.setMockInitialValues(
+        appName: "myapp",
+        packageName: "mypackage",
+        version: "1.1.1",
+        buildNumber: "555",
+        buildSignature: "whatever");
     await setup();
     await tester.pumpWidget(const MyApp());
   });
