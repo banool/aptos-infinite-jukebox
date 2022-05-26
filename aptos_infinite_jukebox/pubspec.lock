@@ -489,10 +489,10 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: e37786f6d964692f39616623f4260c7c2990d70d
+      resolved-ref: "193bc851f00e0d206f4184b3accfcb1b57312069"
       url: "https://github.com/banool/spotify_sdk.git"
     source: git
-    version: "2.3.0"
+    version: "2.4.0"
   stack_trace:
     dependency: transitive
     description:

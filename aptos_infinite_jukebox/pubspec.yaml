@@ -3,7 +3,7 @@ description: An Infinite Jukebox powered by Aptos
 
 publish_to: none
 
-version: 1.0.154+155
+version: 1.0.155+156
 
 environment:
   sdk: ">=2.16.2 <3.0.0"

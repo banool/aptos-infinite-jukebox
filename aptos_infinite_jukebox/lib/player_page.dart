@@ -82,7 +82,7 @@ class _PlayerPageState extends State<PlayerPage> {
                 height: desiredImageDimension.value.toDouble(),
                 child: Center(
                     child: Column(children: [
-                  Text('Error getting image'),
+                  Text("Error getting image: ${snapshot.error}"),
                   TextButton(
                     child: Text("Try loading image again"),
                     onPressed: () => setState(() {}),
@@ -210,14 +210,29 @@ class _PlayerPageState extends State<PlayerPage> {
         child: Column(
             mainAxisAlignment: MainAxisAlignment.center, children: children));
 
-    return buildTopLevelScaffold(
-        widget.pageSelectorController, Center(child: body),
-        title: "Tuned in!");
+    return body;
+  }
+
+  String getRandomTitle() {
+    return ([
+          "Sitting pretty",
+          "Tuned in",
+          "Keeping it cool",
+          "Vibing out",
+          "Jamming out",
+          "Getting hyped",
+          "Popping off",
+          "Straight chilling"
+        ]..shuffle())
+            .first +
+        "...";
   }
 
   // Here we assume ConnectionStatus.connected of SpotifySdk is true.
   // On web, if you tab away and tab back, subscribePlayerState just returns
-  // null forever. Instead we await getPlayerState.
+  // null forever. Instead we await getPlayerState, knowing that when the
+  // song changes, the ChangeNotifier in playbackManager will cause a refresh.
+  // TODO: Consider doing this for other platforms too.
   @override
   Widget build(BuildContext context) {
     Widget body;
@@ -250,7 +265,9 @@ class _PlayerPageState extends State<PlayerPage> {
             return buildWithPlayerState(context, snapshot.data!);
           });
     }
-    return body;
+    return buildTopLevelScaffold(
+        widget.pageSelectorController, Center(child: body),
+        title: getRandomTitle());
   }
 }
 

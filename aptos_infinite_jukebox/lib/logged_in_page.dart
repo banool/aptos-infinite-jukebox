@@ -176,12 +176,17 @@ class LoggedInPageState extends State<LoggedInPage> {
     await updateQueue();
     await Future.delayed(spotifyActionDelay);
 
+    // Skip the dummy track.
+    await SpotifySdk.skipNext();
+    await Future.delayed(spotifyActionDelay);
+
+    // Check sync status once before triggering the build of the player widget.
+    await playbackManager.resyncAndCheck();
+
+    // We're done setting up, trigger the main player page build.
     setState(() {
       settingUpQueue = false;
     });
-
-    // Skip the dummy track.
-    await SpotifySdk.skipNext();
 
     // Start the timers for checking the queue and sync status. We don't
     // explicitly try to sync up our playback status here, we let these timers
