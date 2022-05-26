@@ -3,6 +3,11 @@
 ## Vision of the dapp
 
 ## Overview of each component
+### Move module
+
+### Frontend
+
+### Driver
 
 ## Concept / learning index
 explain each of the concepts somewhat in order of how they're needed
@@ -10,4 +15,4 @@ reference rather than story. vision and overview tells a brief story, then this 
 
 ## 
 
-include provisos around how certain things aren't here yet, like subscribing to events.
+include provisos around how certain things aren't here yet, like subscribing to events. todo.
