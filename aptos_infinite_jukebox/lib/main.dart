@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:aptos_infinite_jukebox/page_selector.dart';
 import 'package:aptos_infinite_jukebox/playback_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 
@@ -35,6 +36,8 @@ Future<void> setup() async {
   sharedPreferences = await SharedPreferences.getInstance();
 
   playbackManager = await PlaybackManager.getPlaybackManager();
+
+  packageInfo = await PackageInfo.fromPlatform();
 
   print("Setup finished");
 }

@@ -3,7 +3,7 @@ description: An Infinite Jukebox powered by Aptos
 
 publish_to: none
 
-version: 1.0.150+151
+version: 1.0.151+152
 
 environment:
   sdk: ">=2.16.2 <3.0.0"
@@ -27,6 +27,7 @@ dependencies:
       url: https://github.com/banool/spotify_sdk.git
       ref: main
   url_launcher:
+  package_info_plus:
 
 dev_dependencies:
   flutter_driver:

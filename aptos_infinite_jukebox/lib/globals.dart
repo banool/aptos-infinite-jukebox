@@ -1,3 +1,4 @@
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spotify/spotify.dart';
 
@@ -5,7 +6,7 @@ import 'playback_manager.dart';
 
 late SharedPreferences sharedPreferences;
 late PlaybackManager playbackManager;
+late PackageInfo packageInfo;
+late bool onWeb;
 
 SpotifyApi? spotifyApi;
-
-late bool onWeb;

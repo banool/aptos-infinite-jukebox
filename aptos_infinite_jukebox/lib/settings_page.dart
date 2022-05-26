@@ -154,6 +154,26 @@ class SettingsPageState extends State<SettingsPage> {
         ],
         margin: margin,
       ),
+      SettingsSection(
+        title: Text('App Details'),
+        tiles: [
+          SettingsTile.navigation(
+            title: getText(
+              'See build information',
+            ),
+            trailing: Container(),
+            onPressed: (BuildContext context) async {
+              return await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BuildInformationPage(
+                        pageSelectorController: widget.pageSelectorController),
+                  ));
+            },
+          )
+        ],
+        margin: margin,
+      ),
     ];
 
     List<AbstractSettingsSection> nonNullSections = [];
@@ -266,6 +286,43 @@ class LegalInformationPage extends StatelessWidget {
                   textAlign: TextAlign.center),
             ]));
     return buildTopLevelScaffold(pageSelectorController, body,
-        title: "Legal Information");
+        title: "Legal Information", isSubPage: true);
+  }
+}
+
+class BuildInformationPage extends StatelessWidget {
+  const BuildInformationPage({Key? key, required this.pageSelectorController})
+      : super(key: key);
+
+  final PageSelectorController pageSelectorController;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget body = Padding(
+        padding: EdgeInsets.only(bottom: 10, left: 20, right: 32, top: 20),
+        child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+          Text(
+            "App name: ${packageInfo.appName}\n",
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            "Package name: ${packageInfo.packageName}\n",
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            "Version: ${packageInfo.version}\n",
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            "Build number: ${packageInfo.buildNumber}\n",
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            "Build signature: ${packageInfo.buildSignature}\n",
+            textAlign: TextAlign.center,
+          ),
+        ]));
+    return buildTopLevelScaffold(pageSelectorController, body,
+        title: "Build Information", isSubPage: true);
   }
 }
