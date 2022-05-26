@@ -10,7 +10,7 @@ In addition to the core feature components, there is also code for deploying the
 Each of these components has their own README explaining how to develop and deploy them.
 
 ## Learning
-For reasons I won't go in to here, I found myself with a couple of weeks of free time to work at the periphery of the Aptos ecosystem. I wanted to build a dapp on Aptos, but found that there was a lack of open source, end to end examples showing everything you need to build out a dapp on Aptos. In particular many of the examples didn't dive deep into certain features of the blockchain, such as tables, dealing with the on chain / off chain boundary, etc. To this end I've written a guide of sorts, that aims to teach you certain concepts by pointing you to where I implemented them right there in the code.
+Recently I found myself with a few weeks of free time to work at the periphery of the Aptos ecosystem. I wanted to build a dapp on Aptos, but found that there was a lack of open source, end to end examples showing how to do that. In particular, many of the examples didn't dive deep into certain features of the blockchain, such as tables, dealing with the on chain / off chain boundary, etc. So I made this project and wrote an accompanying guide!
 
 If you're interested in learning about Aptos through this project, check out [LEARNING.md](./LEARNING.md).
 
