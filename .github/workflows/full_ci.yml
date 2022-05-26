@@ -15,31 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: dorny/paths-filter@v2.10.2
+    - uses: dorny/paths-filter@v2
       id: filter
       with:
-        filters: |
-          force: &force
-            - ".force"
-          ci: &ci
-            - ".github/**"
-          frontend:
-            - *ci
-            - *force
-            - 'aptos_infinite_jukebox/**/*'
-            - 'site/**'
-            - 'build.rs'
-            - 'Cargo.toml'
-            - 'Cargo.lock'
-          driver:
-            - *ci
-            - *force
-            - 'driver/**'
-          move_module:
-            - *ci
-            - *force
-            - 'move_module/**'
-
+        filters: '.github/filters.yml'
     - name: Print changes
       run: printf "Frontend changed $FRONTEND\nDriver changed $DRIVER\nMove module changed $MOVE_MODULE\n"
       env:

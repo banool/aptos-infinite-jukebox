@@ -1,22 +1,19 @@
 # Taken from https://github.com/banool/team_heist_tactics/blob/master/.github/filters.yml
-force: &ci
+force: &force
   - ".force"
 
 ci: &ci
   - ".github/**/*"
 
 frontend:
-  - &force
-  - 'aptos_infinite_jukebox/**/*'
-  - 'site/**/*'
-  - 'build.rs'
-  - 'Cargo.toml'
-  - 'Cargo.lock'
+  - *force
+  - 'aptos_infinite_jukebox/lib/**'
+  - 'site/**'
 
 driver:
-  - &force
-  - 'driver/**/*'
+  - *force
+  - 'driver/**'
 
 move_module:
-  - &force
-  - 'move_module/**/*'
+  - *force
+  - 'move_module/**'
