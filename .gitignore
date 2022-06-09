@@ -2,6 +2,7 @@
 .idea
 .vscode
 gha-creds-*.json
+*.swp
 
 # General
 .DS_Store

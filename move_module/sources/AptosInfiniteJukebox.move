@@ -1,3 +1,7 @@
+// This version was tested as working on c9d330dca2bdc14faef8ca042a2fb4a2f3adde6d
+// prior to the devnet being upgraded. We can (and probably will have to) migrate
+// to this on a new devnet release.
+
 // If ever updating this version, also update:
 // - driver/src/aptos_helper.rs
 // - aptos_infinite_jukebox/lib/constants.dart
@@ -117,10 +121,10 @@ module AptosInfiniteJukebox::JukeboxV15 {
         let voter_addr = Signer::address_of(voter);
         let inner = &mut borrow_global_mut<JukeboxV15>(jukebox_address).inner;
         // IterableTable::borrow_mut_with_default doesn't exist so we hace to do this instead.
-        if (IterableTable::contains(&inner.next_song_votes, &voter_addr)) {
-            *IterableTable::borrow_mut(&mut inner.next_song_votes, &voter_addr) = vote;
+        if (IterableTable::contains(&inner.next_song_votes, voter_addr)) {
+            *IterableTable::borrow_mut(&mut inner.next_song_votes, voter_addr) = vote;
         } else {
-            IterableTable::add(&mut inner.next_song_votes, &voter_addr, vote);
+            IterableTable::add(&mut inner.next_song_votes, voter_addr, vote);
         };
     }
 
@@ -147,7 +151,7 @@ module AptosInfiniteJukebox::JukeboxV15 {
             if (Option::is_none(&key)) {
                 break
             };
-            let (vote, _previous_key, next_key) = IterableTable::remove_iter(&mut inner.next_song_votes, Option::borrow(&key));
+            let (vote, _previous_key, next_key) = IterableTable::remove_iter(&mut inner.next_song_votes, Option::extract(&mut key));
             let value = iterable_table_borrow_mut_with_default(&mut vote_counter, vote.song, 0);
             *value = *value + 1;
             key = next_key;
@@ -165,7 +169,7 @@ module AptosInfiniteJukebox::JukeboxV15 {
                 break
             };
             let song = Option::extract(&mut key);
-            let (vote_count, _previous_key, next_key) = IterableTable::remove_iter(&mut vote_counter, &song);
+            let (vote_count, _previous_key, next_key) = IterableTable::remove_iter(&mut vote_counter, song);
             if (vote_count > current_winner_num_votes) {
                 current_winner = song;
                 current_winner_num_votes = vote_count;
@@ -189,10 +193,10 @@ module AptosInfiniteJukebox::JukeboxV15 {
 
     // TODO: Make a PR to add this to IterableTable natively.
     fun iterable_table_borrow_mut_with_default<K: copy + drop + store, V: drop + store>(table: &mut IterableTable::IterableTable<K, V>, key: K, default: V): &mut V {
-        if (!IterableTable::contains(table, &key)) {
-            IterableTable::add<K, V>(table, &key, default)
+        if (!IterableTable::contains(table, key)) {
+            IterableTable::add<K, V>(table, key, default)
         };
-        IterableTable::borrow_mut<K, V>(table, &key)
+        IterableTable::borrow_mut<K, V>(table, key)
     }
 
     #[test(core_resources = @CoreResources, account1 = @0x123, account2 = @0x456)]
@@ -235,13 +239,13 @@ module AptosInfiniteJukebox::JukeboxV15 {
 
         // Assert that we can see that vote.
         let votes = &borrow_global<JukeboxV15>(addr1).inner.next_song_votes;
-        assert!(IterableTable::borrow(votes, &addr2) == &vote, Errors::internal(E_TEST_FAILURE));
+        assert!(IterableTable::borrow(votes, addr2) == &vote, Errors::internal(E_TEST_FAILURE));
 
         // Assert that a voter can change their vote.
         let vote2 = Vote{ song: Song{ track_id: ASCII::string(b"xyz6789") } };
         vote_internal(&account2, addr1, vote2);
         let votes = &borrow_global<JukeboxV15>(addr1).inner.next_song_votes;
-        assert!(IterableTable::borrow(votes, &addr2) == &vote2, Errors::internal(E_TEST_FAILURE));
+        assert!(IterableTable::borrow(votes, addr2) == &vote2, Errors::internal(E_TEST_FAILURE));
     }
 
     #[test(core_resources = @CoreResources, account1 = @0x123, account2 = @0x456)]
