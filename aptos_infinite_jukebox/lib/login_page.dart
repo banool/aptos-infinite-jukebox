@@ -161,7 +161,13 @@ class LoginPageState extends State<LoginPage> {
     } else {
       String connectButtonText = "Connect to Spotify";
       children += [
-        getConnectionButton(connectButtonText, getAccessTokenAndConnect)
+        getConnectionButton(connectButtonText, getAccessTokenAndConnect),
+        Padding(
+            padding: EdgeInsets.only(top: 20, left: 30, right: 30),
+            child: Text(
+              "Note: You must have a Spotify Premium account to use the Infinite Jukebox.",
+              textAlign: TextAlign.center,
+            )),
       ];
     }
 

@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 
 import 'constants.dart';
 import 'globals.dart';
+import 'make_vote_page.dart';
 
 Future<void> setup() async {
   print("Setup starting");
@@ -32,6 +33,17 @@ Future<void> setup() async {
   // Load shared preferences. We do this first because the later futures,
   // such as loadFavourites and the knobs, depend on it being initialized.
   sharedPreferences = await SharedPreferences.getInstance();
+
+  var privateKeyRaw = sharedPreferences.getString(keyPrivateKey);
+  if (privateKeyRaw != null) {
+    try {
+      instantiateAptosAccount(privateKeyRaw);
+    } catch (e) {
+      print("Failed to process private key on launch, wiping it");
+      await sharedPreferences.remove(keyPrivateKey);
+      uninstantiateAptosAccount();
+    }
+  }
 
   playbackManager = await PlaybackManager.getPlaybackManager();
 

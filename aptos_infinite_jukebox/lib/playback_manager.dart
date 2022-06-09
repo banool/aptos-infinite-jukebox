@@ -116,7 +116,8 @@ class PlaybackManager extends ChangeNotifier {
       rawTrackQueue.add(o["track_id"]!);
     }
 
-    if (!listEquals(lastSeenQueue, rawTrackQueue)) {
+    if (!listEquals(lastSeenQueue, rawTrackQueue) ||
+        fetchQueueTracksFuture == null) {
       // Don't wait for this to happen.
       fetchQueueTracksFuture = updateQueueTracks(rawTrackQueue);
     }

@@ -1,3 +1,5 @@
+import 'package:aptos_sdk_dart/aptos_account.dart';
+import 'package:aptos_sdk_dart/aptos_sdk_dart.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spotify/spotify.dart';
@@ -10,3 +12,6 @@ late PackageInfo packageInfo;
 late bool onWeb;
 
 SpotifyApi? spotifyApi;
+
+AptosAccount? aptosAccount;
+HexString? privateKey;

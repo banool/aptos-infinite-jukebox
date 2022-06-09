@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:aptos_infinite_jukebox/common.dart';
 import 'package:aptos_infinite_jukebox/globals.dart';
 import 'package:aptos_infinite_jukebox/vote_results_page.dart';
-import 'package:aptos_sdk_dart/aptos_client_helper.dart';
 import 'package:aptos_sdk_dart/aptos_sdk_dart.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:built_value/json_object.dart';
@@ -175,8 +174,6 @@ class MakeVotePageState extends State<MakeVotePage> {
 
     String aptosNodeUrl =
         sharedPreferences.getString(keyAptosNodeUrl) ?? defaultAptosNodeUrl;
-    HexString privateKey =
-        HexString.fromString(sharedPreferences.getString(keyPrivateKey)!);
     HexString moduleAddress = HexString.fromString(
         sharedPreferences.getString(keyModuleAddress) ?? defaultModuleAddress);
     HexString jukeboxAddress = HexString.fromString(
@@ -187,8 +184,6 @@ class MakeVotePageState extends State<MakeVotePage> {
 
     AptosClientHelper aptosClientHelper =
         AptosClientHelper.fromBaseUrl(aptosNodeUrl);
-
-    AptosAccount account = AptosAccount.fromPrivateKeyHexString(privateKey);
 
     String func = "${moduleAddress.withPrefix()}::$moduleName::vote";
 
@@ -221,12 +216,12 @@ class MakeVotePageState extends State<MakeVotePage> {
     // current sequence number so we can build that transasction.
     $UserTransactionRequestBuilder userTransactionBuilder =
         await aptosClientHelper.generateTransaction(
-            account.address, transactionPayloadBuilder);
+            aptosAccount!.address, transactionPayloadBuilder);
 
     // Convert the transaction into the appropriate format and then sign it.
     SubmitTransactionRequestBuilder submitTransactionRequestBuilder =
         await aptosClientHelper.signTransaction(
-            account, userTransactionBuilder);
+            aptosAccount!, userTransactionBuilder);
 
     bool committed = false;
     String? errorString;
@@ -252,7 +247,7 @@ class MakeVotePageState extends State<MakeVotePage> {
           await aptosClientHelper.waitForTransaction(pendingTransaction.hash);
 
       committed = pendingTransactionResult.committed;
-      errorString = pendingTransactionResult.getErrorString();
+      errorString = getErrorString(pendingTransactionResult.error);
     } on DioError catch (e) {
       errorString =
           "Type: ${e.type}\nMessage: ${e.message}\nResponse: ${e.response}\nError: ${e.error}";
@@ -369,4 +364,15 @@ class MakeVotePageState extends State<MakeVotePage> {
   void dispose() {
     super.dispose();
   }
+}
+
+void instantiateAptosAccount(String privateKeyRaw) {
+  var k = HexString.fromString(privateKeyRaw);
+  aptosAccount = AptosAccount.fromPrivateKeyHexString(k);
+  privateKey = k;
+}
+
+void uninstantiateAptosAccount() {
+  privateKey = null;
+  aptosAccount = null;
 }

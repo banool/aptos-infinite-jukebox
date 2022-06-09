@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:aptos_sdk_dart/aptos_client_helper.dart';
 import 'package:aptos_sdk_dart/aptos_sdk_dart.dart';
 import 'package:built_value/json_object.dart';
 import 'package:flutter/material.dart';
@@ -27,9 +26,6 @@ class VotingPageState extends State<VotingPage> {
   Map<String, int> votes = {};
   String? myVote;
 
-  HexString? privateKey;
-  HexString? address;
-
   Timer? checkVotesTimer;
 
   int queueIndex = 0;
@@ -37,12 +33,6 @@ class VotingPageState extends State<VotingPage> {
   @override
   void initState() {
     super.initState();
-    // Get private key and address if set.
-    var privateKeyRaw = sharedPreferences.getString(keyPrivateKey);
-    if (privateKeyRaw != null) {
-      privateKey = HexString.fromString(privateKeyRaw);
-      address = AptosAccount.fromPrivateKeyHexString(privateKey!).address;
-    }
     initStateAsyncFuture = initStateAsync();
     // TODO: Only rebuild on queue changes, not out of sync changes.
     playbackManager.addListener(() {
@@ -109,7 +99,7 @@ class VotingPageState extends State<VotingPage> {
     // Perhaps this is the wrong approach and I should just use whatever
     // info I retrieved for getOthersVotes.
     TableItemRequest tableItemRequest = (TableItemRequestBuilder()
-          ..key = JsonObject(address!.withPrefix())
+          ..key = JsonObject(aptosAccount!.address.withPrefix())
           ..keyType = "address"
           ..valueType = buildResourceType())
         .build();
@@ -254,7 +244,7 @@ class VotingPageState extends State<VotingPage> {
             padding: EdgeInsets.only(bottom: 0),
             child: buildUpcomingSongsWidget()),
         Padding(
-            padding: EdgeInsets.only(top: 30, bottom: 30), child: voteWidget),
+            padding: EdgeInsets.only(top: 50, bottom: 30), child: voteWidget),
       ],
     );
 

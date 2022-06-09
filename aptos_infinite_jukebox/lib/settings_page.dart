@@ -1,10 +1,12 @@
 import 'package:aptos_infinite_jukebox/troubleshooting_help_page.dart';
+import 'package:aptos_sdk_dart/aptos_sdk_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'constants.dart';
 import 'globals.dart';
+import 'make_vote_page.dart';
 import 'page_selector.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -95,8 +97,28 @@ class SettingsPageState extends State<SettingsPage> {
               trailing: Container(),
               onPressed: (BuildContext context) async {
                 bool confirmed = await showChangeStringSharedPrefDialog(
-                    context, "Private key", keyPrivateKey, defaultPrivateKey);
+                    context, "Private key", keyPrivateKey, defaultPrivateKey,
+                    allowEmptyString: true,
+                    confirmationValidator: ((newValue, {context}) {
+                  try {
+                    if (newValue == "") {
+                      uninstantiateAptosAccount();
+                    } else {
+                      instantiateAptosAccount(newValue);
+                    }
+                    return true;
+                  } catch (e) {
+                    print(
+                        "Failed to modify private key + global account object: $e");
+                    if (context != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Private key invalid: $e")));
+                    }
+                    return false;
+                  }
+                }));
                 if (confirmed) {
+                  await clearCachedTableHandle();
                   setState(() {});
                 }
               }),
@@ -203,7 +225,11 @@ Text getText(String s, {bool larger = false}) {
 
 Future<bool> showChangeStringSharedPrefDialog(
     BuildContext context, String title, String key, String? defaultValue,
-    {String cancelText = "Cancel", String confirmText = "Confirm"}) async {
+    {String cancelText = "Cancel",
+    String confirmText = "Confirm",
+    bool allowEmptyString = false,
+    bool Function(String newValue, {BuildContext? context})?
+        confirmationValidator}) async {
   bool confirmed = false;
   String currentValue = sharedPreferences.getString(key) ?? defaultValue ?? "";
   TextEditingController textController =
@@ -225,12 +251,18 @@ Future<bool> showChangeStringSharedPrefDialog(
     child: Text(confirmText),
     onPressed: () async {
       String newValue = textController.text;
-      if (newValue == "") {
+      if (newValue == "" && !allowEmptyString) {
         print("Not setting empty string for $key");
       } else {
-        await sharedPreferences.setString(key, newValue);
-        print("Set $key to $newValue");
-        confirmed = true;
+        if (confirmationValidator != null) {
+          confirmed = confirmationValidator(newValue, context: context);
+        } else {
+          confirmed = true;
+        }
+        if (confirmed) {
+          await sharedPreferences.setString(key, newValue);
+          print("Set $key to \"$newValue\"");
+        }
       }
       Navigator.of(context).pop();
     },
