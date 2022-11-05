@@ -1,10 +1,18 @@
 [package]
 name = "AptosInfiniteJukebox"
-version = "0.1.0"
+version = "0.2.1"
+upgrade_policy = "compatible"
 
-[dependencies]
-AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "ea493e4947e06fb51da96a0561377fb147d97b8c" }
+[dependencies.AptosFramework]
+git = 'https://github.com/aptos-labs/aptos-core.git'
+rev = 'testnet'
+subdir = 'aptos-move/framework/aptos-framework'
+
+[dependencies.DataStructure]
+git = 'https://github.com/aptos-labs/aptos-core.git'
+rev = 'banool/iterable_table_dport'
+subdir = 'aptos-move/move-examples/data_structures'
 
 [addresses]
-AptosInfiniteJukebox = "c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd"
-
+jukebox = "0xb078d693856a65401d492f99ca0d6a29a0c5c0e371bc2521570a86e40d95f823"
+dport_collections = "0xb078d693856a65401d492f99ca0d6a29a0c5c0e371bc2521570a86e40d95f823"

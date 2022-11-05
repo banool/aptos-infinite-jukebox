@@ -5,22 +5,22 @@
 // If ever updating this version, also update:
 // - driver/src/aptos_helper.rs
 // - aptos_infinite_jukebox/lib/constants.dart
-module AptosInfiniteJukebox::JukeboxV15 {
-    use Std::ASCII;
-    use Std::Errors;
-    use Std::IterableTable;
-    use Std::Option;
-    use Std::Signer;
-    use Std::Timestamp;
-    use Std::Vector;
+module jukebox::jukebox {
+    use std::string::{Self, String};
+    use std::error;
+    use dport_collections::iterable_table::{Self, IterableTable};
+    use std::option;
+    use std::signer;
+    use std::timestamp;
+    use std::vector;
 
-    /// How long to delay "playing" the first song when a jukebox is initialized. 
+    /// How long to delay "playing" the first song when a jukebox is initialized.
     const DELAY_BETWEEN_SONGS: u64 = 10000000;  // 10 seconds.
 
     /// This is how long prior to the end of a song that the driver kicks in and
     /// triggers vote resolution. Realistically it's impossible to time this perfectly,
     /// so this sets a lower bound on when the next song will start, mostly guaranteeing
-    /// that the next song will start some time after the end of the previou song.
+    /// that the next song will start some time after the end of the previous song.
     /// The frontend can adapt to this and pause playback when one song ends until it
     /// is the right time to start the next song. This value should match the
     /// resolve_votes_threshold_ms value for the driver (except this is in microseconds,
@@ -46,7 +46,7 @@ module AptosInfiniteJukebox::JukeboxV15 {
     /// holds all the interesting stuff. We do it this way so it's easy to
     /// grab a mutable reference to everything at once without running into
     /// issues from holding multiple references. This is acceptable for now.
-    struct JukeboxV15 has key {
+    struct Jukebox has key {
         inner: Inner,
     }
 
@@ -62,7 +62,7 @@ module AptosInfiniteJukebox::JukeboxV15 {
         /// Votes for which song to next put at the end of the queue.
         /// Currently votes are not weighted or ACL'd, any account
         /// can submit one vote.
-        next_song_votes: IterableTable::IterableTable<address, Vote>,
+        next_song_votes: IterableTable<address, Vote>,
     }
 
     /// Pretty much a newtype (using Rust terminology).
@@ -71,7 +71,7 @@ module AptosInfiniteJukebox::JukeboxV15 {
         /// See https://developer.spotify.com/documentation/web-api/
         /// Currently we don't deal with what happens if an invalidstring (i.e. not
         /// a Spotify track ID) wins the election.
-        track_id: ASCII::String,
+        track_id: String,
     }
 
     /// We represent a vote as a struct in case we want to add further
@@ -82,49 +82,49 @@ module AptosInfiniteJukebox::JukeboxV15 {
     }
 
     /// Initialize the infinite jukebox. For now we seed it with songs right here.
-    public(script) fun initialize_jukebox(account: &signer) {
-        let q = Vector::empty<Song>();
+    public entry fun initialize_jukebox(account: &signer) {
+        let q = vector::empty<Song>();
         // Bootstrap the queue with NUM_SONGS_IN_QUEUE songs.
         // If we change this number, change the tests too.
 
         // White Winter Hymnal
-        Vector::push_back(&mut q, Song{ track_id: ASCII::string(b"3QVtICc8ViNOy4I5K14d8Z") });
+        vector::push_back(&mut q, Song{ track_id: string::utf8(b"3QVtICc8ViNOy4I5K14d8Z") });
         // Mamadou Kanda Keita
-        Vector::push_back(&mut q, Song{ track_id: ASCII::string(b"6jgeug0bubcri5YcS23WeQ") });
+        vector::push_back(&mut q, Song{ track_id: string::utf8(b"6jgeug0bubcri5YcS23WeQ") });
         // Anaguragurashi
-        Vector::push_back(&mut q, Song{ track_id: ASCII::string(b"3FvzeaesPY35bhhj55u4zJ") });
+        vector::push_back(&mut q, Song{ track_id: string::utf8(b"3FvzeaesPY35bhhj55u4zJ") });
         // Uncover
-        Vector::push_back(&mut q, Song{ track_id: ASCII::string(b"2oFbMd0TcgUm7Df4Sx16h9") });
+        vector::push_back(&mut q, Song{ track_id: string::utf8(b"2oFbMd0TcgUm7Df4Sx16h9") });
         // Igor's Theme
-        Vector::push_back(&mut q, Song{ track_id: ASCII::string(b"51RN0kzWd7xeR4th5HsEtW") });
+        vector::push_back(&mut q, Song{ track_id: string::utf8(b"51RN0kzWd7xeR4th5HsEtW") });
 
-        assert!(Vector::length(&q) == NUM_SONGS_IN_QUEUE, Errors::internal(E_BROKEN_INTERNAL_INVARIANT));
+        assert!(vector::length(&q) == NUM_SONGS_IN_QUEUE, error::internal(E_BROKEN_INTERNAL_INVARIANT));
         let inner = Inner{
             song_queue: q,
-            time_to_start_playing: Timestamp::now_microseconds() + DELAY_BETWEEN_SONGS,
-            next_song_votes: IterableTable::new<address, Vote>(),
+            time_to_start_playing: timestamp::now_microseconds() + DELAY_BETWEEN_SONGS,
+            next_song_votes: iterable_table::new<address, Vote>(),
         };
-        move_to(account, JukeboxV15{ inner });
+        move_to(account, Jukebox{ inner });
     }
 
     /// Public wrapper around vote, since you can't use structs nor ascii in external calls.
-    public(script) fun vote(voter: &signer, jukebox_address: address, vote: vector<u8>) acquires JukeboxV15 {
-        let v = Vote{ song: Song{ track_id: ASCII::string(vote) } };
+    public entry fun vote(voter: &signer, jukebox_address: address, vote: vector<u8>) acquires Jukebox {
+        let v = Vote{ song: Song{ track_id: string::utf8(vote) } };
         vote_internal(voter, jukebox_address, v);
     }
 
     /// Vote for what song to play in the next round. The user is able to
     /// change their vote if they want.
-    fun vote_internal(voter: &signer, jukebox_address: address, vote: Vote) acquires JukeboxV15 {
-        assert!(exists<JukeboxV15>(jukebox_address), Errors::not_published(E_NO_JUKEBOX));
+    fun vote_internal(voter: &signer, jukebox_address: address, vote: Vote) acquires Jukebox {
+        assert!(exists<Jukebox>(jukebox_address), error::not_found(E_NO_JUKEBOX));
 
-        let voter_addr = Signer::address_of(voter);
-        let inner = &mut borrow_global_mut<JukeboxV15>(jukebox_address).inner;
-        // IterableTable::borrow_mut_with_default doesn't exist so we hace to do this instead.
-        if (IterableTable::contains(&inner.next_song_votes, voter_addr)) {
-            *IterableTable::borrow_mut(&mut inner.next_song_votes, voter_addr) = vote;
+        let voter_addr = signer::address_of(voter);
+        let inner = &mut borrow_global_mut<Jukebox>(jukebox_address).inner;
+        // iterable_table::borrow_mut_with_default doesn't exist so we have to do this instead.
+        if (iterable_table::contains(&inner.next_song_votes, voter_addr)) {
+            *iterable_table::borrow_mut(&mut inner.next_song_votes, voter_addr) = vote;
         } else {
-            IterableTable::add(&mut inner.next_song_votes, voter_addr, vote);
+            iterable_table::add(&mut inner.next_song_votes, voter_addr, vote);
         };
     }
 
@@ -137,21 +137,21 @@ module AptosInfiniteJukebox::JukeboxV15 {
     /// If the "driver" of this module (a cron that calls resolve_votes every
     /// time a song ends) stops calling this function, we expect clients will
     /// just not play anything.
-    public(script) fun resolve_votes(account: &signer) acquires JukeboxV15 {
-        let addr = Signer::address_of(account);
+    public entry fun resolve_votes(account: &signer) acquires Jukebox {
+        let addr = signer::address_of(account);
 
-        assert!(exists<JukeboxV15>(addr), Errors::not_published(E_NO_JUKEBOX));
+        assert!(exists<Jukebox>(addr), error::not_found(E_NO_JUKEBOX));
 
-        let inner = &mut borrow_global_mut<JukeboxV15>(addr).inner;
+        let inner = &mut borrow_global_mut<Jukebox>(addr).inner;
 
         // Build up a counter of song to how many people made that vote.
-        let vote_counter = IterableTable::new<Song, u64>();
-        let key = IterableTable::head_key(&inner.next_song_votes);
+        let vote_counter = iterable_table::new<Song, u64>();
+        let key = iterable_table::head_key(&inner.next_song_votes);
         loop {
-            if (Option::is_none(&key)) {
+            if (option::is_none(&key)) {
                 break
             };
-            let (vote, _previous_key, next_key) = IterableTable::remove_iter(&mut inner.next_song_votes, Option::extract(&mut key));
+            let (vote, _previous_key, next_key) = iterable_table::remove_iter(&mut inner.next_song_votes, option::extract(&mut key));
             let value = iterable_table_borrow_mut_with_default(&mut vote_counter, vote.song, 0);
             *value = *value + 1;
             key = next_key;
@@ -161,15 +161,15 @@ module AptosInfiniteJukebox::JukeboxV15 {
         // is a tie, currently whichever tied song was voted for first will win.
         // Here we pop the head off the queue and then push a new song onto the end.
         // If there were no votes, we just use the head and put that on the tail.
-        let current_winner: Song = Vector::remove(&mut inner.song_queue, 0);
+        let current_winner: Song = vector::remove(&mut inner.song_queue, 0);
         let current_winner_num_votes = 0;
-        let key = IterableTable::head_key(&vote_counter);
+        let key = iterable_table::head_key(&vote_counter);
         loop {
-            if (Option::is_none(&key)) {
+            if (option::is_none(&key)) {
                 break
             };
-            let song = Option::extract(&mut key);
-            let (vote_count, _previous_key, next_key) = IterableTable::remove_iter(&mut vote_counter, song);
+            let song = option::extract(&mut key);
+            let (vote_count, _previous_key, next_key) = iterable_table::remove_iter(&mut vote_counter, song);
             if (vote_count > current_winner_num_votes) {
                 current_winner = song;
                 current_winner_num_votes = vote_count;
@@ -178,95 +178,95 @@ module AptosInfiniteJukebox::JukeboxV15 {
         };
 
         // Finally push the winner on to the end of the queue.
-        Vector::push_back(&mut inner.song_queue, current_winner);
+        vector::push_back(&mut inner.song_queue, current_winner);
 
         // Update time_to_start_playing regardless of whether a new song was elected.
-        *&mut inner.time_to_start_playing = Timestamp::now_microseconds() + TIME_BEFORE_END_OF_SONG_VOTE_RESOLUTION_TRIGGERED;
+        *&mut inner.time_to_start_playing = timestamp::now_microseconds() + TIME_BEFORE_END_OF_SONG_VOTE_RESOLUTION_TRIGGERED;
 
         // Make sure everything ends / is reset as expected.
-        IterableTable::destroy_empty(vote_counter);
-        assert!(IterableTable::length(&inner.next_song_votes) == 0, Errors::internal(E_BROKEN_INTERNAL_INVARIANT));
+        iterable_table::destroy_empty(vote_counter);
+        assert!(iterable_table::length(&inner.next_song_votes) == 0, error::internal(E_BROKEN_INTERNAL_INVARIANT));
 
         // Make sure we still have the expected number of songs in the queue.
-        assert!(Vector::length(&inner.song_queue) == NUM_SONGS_IN_QUEUE, Errors::internal(E_BROKEN_INTERNAL_INVARIANT));
+        assert!(vector::length(&inner.song_queue) == NUM_SONGS_IN_QUEUE, error::internal(E_BROKEN_INTERNAL_INVARIANT));
     }
 
     // TODO: Make a PR to add this to IterableTable natively.
-    fun iterable_table_borrow_mut_with_default<K: copy + drop + store, V: drop + store>(table: &mut IterableTable::IterableTable<K, V>, key: K, default: V): &mut V {
-        if (!IterableTable::contains(table, key)) {
-            IterableTable::add<K, V>(table, key, default)
+    fun iterable_table_borrow_mut_with_default<K: copy + drop + store, V: drop + store>(table: &mut IterableTable<K, V>, key: K, default: V): &mut V {
+        if (!iterable_table::contains(table, key)) {
+            iterable_table::add<K, V>(table, key, default)
         };
-        IterableTable::borrow_mut<K, V>(table, key)
+        iterable_table::borrow_mut<K, V>(table, key)
     }
 
     #[test(core_resources = @CoreResources, account1 = @0x123, account2 = @0x456)]
-    public(script) fun test_initialize(core_resources: signer, account1: signer, account2: signer) acquires JukeboxV15 {
-        Timestamp::set_time_has_started_for_testing(&core_resources);
+    public entry fun test_initialize(core_resources: signer, account1: signer, account2: signer) acquires Jukebox {
+        timestamp::set_time_has_started_for_testing(&core_resources);
 
         // Account 1 is where we initialize the jukebox.
         // Account 2 is a participating voter.
-        let addr1 = Signer::address_of(&account1);
-        let _addr2 = Signer::address_of(&account2);
+        let addr1 = signer::address_of(&account1);
+        let _addr2 = signer::address_of(&account2);
 
         // Initialize a jukebox on account1.
         initialize_jukebox(&account1);
-        assert!(exists<JukeboxV15>(addr1), Errors::internal(E_TEST_FAILURE));
+        assert!(exists<Jukebox>(addr1), error::internal(E_TEST_FAILURE));
 
         // Assert that we can see the initial song.
-        let front_of_queue = Vector::borrow(&borrow_global<JukeboxV15>(addr1).inner.song_queue, 0).track_id;
+        let front_of_queue = vector::borrow(&borrow_global<Jukebox>(addr1).inner.song_queue, 0).track_id;
         assert!(
-            front_of_queue == ASCII::string(b"3QVtICc8ViNOy4I5K14d8Z"),
+            front_of_queue == string::utf8(b"3QVtICc8ViNOy4I5K14d8Z"),
             E_TEST_FAILURE
         );
     }
 
     #[test(core_resources = @CoreResources, account1 = @0x123, account2 = @0x456)]
-    public(script) fun test_vote(core_resources: signer, account1: signer, account2: signer) acquires JukeboxV15 {
-        Timestamp::set_time_has_started_for_testing(&core_resources);
+    public entry fun test_vote(core_resources: signer, account1: signer, account2: signer) acquires Jukebox {
+        timestamp::set_time_has_started_for_testing(&core_resources);
 
         // Account 1 is where we initialize the jukebox.
         // Account 2 is a participating voter.
-        let addr1 = Signer::address_of(&account1);
-        let addr2 = Signer::address_of(&account2);
+        let addr1 = signer::address_of(&account1);
+        let addr2 = signer::address_of(&account2);
 
         // Initialize a jukebox on account1.
         initialize_jukebox(&account1);
-        assert!(exists<JukeboxV15>(addr1), Errors::internal(E_TEST_FAILURE));
+        assert!(exists<Jukebox>(addr1), error::internal(E_TEST_FAILURE));
 
         // Submit a vote.
-        let vote = Vote{ song: Song{ track_id: ASCII::string(b"abc1234") } };
+        let vote = Vote{ song: Song{ track_id: string::utf8(b"abc1234") } };
         vote_internal(&account2, addr1, vote);
 
         // Assert that we can see that vote.
-        let votes = &borrow_global<JukeboxV15>(addr1).inner.next_song_votes;
-        assert!(IterableTable::borrow(votes, addr2) == &vote, Errors::internal(E_TEST_FAILURE));
+        let votes = &borrow_global<Jukebox>(addr1).inner.next_song_votes;
+        assert!(iterable_table::borrow(votes, addr2) == &vote, error::internal(E_TEST_FAILURE));
 
         // Assert that a voter can change their vote.
-        let vote2 = Vote{ song: Song{ track_id: ASCII::string(b"xyz6789") } };
+        let vote2 = Vote{ song: Song{ track_id: string::utf8(b"xyz6789") } };
         vote_internal(&account2, addr1, vote2);
-        let votes = &borrow_global<JukeboxV15>(addr1).inner.next_song_votes;
-        assert!(IterableTable::borrow(votes, addr2) == &vote2, Errors::internal(E_TEST_FAILURE));
+        let votes = &borrow_global<Jukebox>(addr1).inner.next_song_votes;
+        assert!(iterable_table::borrow(votes, addr2) == &vote2, error::internal(E_TEST_FAILURE));
     }
 
     #[test(core_resources = @CoreResources, account1 = @0x123, account2 = @0x456)]
-    public(script) fun test_resolve_votes(core_resources: signer, account1: signer, account2: signer) acquires JukeboxV15 {
-        Timestamp::set_time_has_started_for_testing(&core_resources);
+    public entry fun test_resolve_votes(core_resources: signer, account1: signer, account2: signer) acquires Jukebox {
+        timestamp::set_time_has_started_for_testing(&core_resources);
 
         // Account 1 is where we initialize the jukebox.
         // Account 2 is a participating voter.
-        let addr1 = Signer::address_of(&account1);
-        let _addr2 = Signer::address_of(&account2);
+        let addr1 = signer::address_of(&account1);
+        let _addr2 = signer::address_of(&account2);
 
         // Initialize a jukebox on account1.
         initialize_jukebox(&account1);
-        assert!(exists<JukeboxV15>(addr1), Errors::internal(E_TEST_FAILURE));
+        assert!(exists<Jukebox>(addr1), error::internal(E_TEST_FAILURE));
 
         // Get current time_to_start_playing.
-        let front_of_queue_1 = Vector::borrow(&borrow_global<JukeboxV15>(addr1).inner.song_queue, 0).track_id;
-        let time_to_start_playing_1 = borrow_global<JukeboxV15>(addr1).inner.time_to_start_playing;
+        let front_of_queue_1 = vector::borrow(&borrow_global<Jukebox>(addr1).inner.song_queue, 0).track_id;
+        let time_to_start_playing_1 = borrow_global<Jukebox>(addr1).inner.time_to_start_playing;
 
         // Advance the clock to 1 second since epoch.
-        Timestamp::update_global_time_for_test(10000000000000000);
+        timestamp::update_global_time_for_test(10000000000000000);
 
         // Resolve votes.
         resolve_votes(&account1);
@@ -275,44 +275,44 @@ module AptosInfiniteJukebox::JukeboxV15 {
         // second in the queue, and that the previous song is now at the end of the
         // queue (since there weren't any votes). Also assert that time_to_start_playing
         // has been updated.
-        let front_of_queue_2 = Vector::borrow(&borrow_global<JukeboxV15>(addr1).inner.song_queue, 0).track_id;
-        let end_of_queue_2 = Vector::borrow(&borrow_global<JukeboxV15>(addr1).inner.song_queue, NUM_SONGS_IN_QUEUE - 1).track_id;
-        let time_to_start_playing_2 = borrow_global<JukeboxV15>(addr1).inner.time_to_start_playing;
+        let front_of_queue_2 = vector::borrow(&borrow_global<Jukebox>(addr1).inner.song_queue, 0).track_id;
+        let end_of_queue_2 = vector::borrow(&borrow_global<Jukebox>(addr1).inner.song_queue, NUM_SONGS_IN_QUEUE - 1).track_id;
+        let time_to_start_playing_2 = borrow_global<Jukebox>(addr1).inner.time_to_start_playing;
 
-        assert!(front_of_queue_2 == ASCII::string(b"6jgeug0bubcri5YcS23WeQ"), Errors::internal(E_TEST_FAILURE));
-        assert!(end_of_queue_2 == front_of_queue_1, Errors::internal(E_TEST_FAILURE));
-        assert!(time_to_start_playing_2 > time_to_start_playing_1, Errors::internal(E_TEST_FAILURE));
+        assert!(front_of_queue_2 == string::utf8(b"6jgeug0bubcri5YcS23WeQ"), error::internal(E_TEST_FAILURE));
+        assert!(end_of_queue_2 == front_of_queue_1, error::internal(E_TEST_FAILURE));
+        assert!(time_to_start_playing_2 > time_to_start_playing_1, error::internal(E_TEST_FAILURE));
 
         // Submit a vote.
-        let vote = Vote{ song: Song{ track_id: ASCII::string(b"abc1234") } };
+        let vote = Vote{ song: Song{ track_id: string::utf8(b"abc1234") } };
         vote_internal(&account2, addr1, vote);
 
         // Update the clock by 2 seconds since epoch.
-        Timestamp::update_global_time_for_test(20000000000000000);
+        timestamp::update_global_time_for_test(20000000000000000);
 
         // Resolve votes.
         resolve_votes(&account1);
 
         // Assert that the song we voted for (the only vote) was selected and put
         // at the end of the queue.
-        let end_of_queue_3 = Vector::borrow(&borrow_global<JukeboxV15>(addr1).inner.song_queue, NUM_SONGS_IN_QUEUE - 1).track_id;
-        let time_to_start_playing_3 = borrow_global<JukeboxV15>(addr1).inner.time_to_start_playing;
+        let end_of_queue_3 = vector::borrow(&borrow_global<Jukebox>(addr1).inner.song_queue, NUM_SONGS_IN_QUEUE - 1).track_id;
+        let time_to_start_playing_3 = borrow_global<Jukebox>(addr1).inner.time_to_start_playing;
 
-        assert!(end_of_queue_3 == vote.song.track_id, Errors::internal(E_TEST_FAILURE));
-        assert!(time_to_start_playing_3 > time_to_start_playing_2, Errors::internal(E_TEST_FAILURE));
+        assert!(end_of_queue_3 == vote.song.track_id, error::internal(E_TEST_FAILURE));
+        assert!(time_to_start_playing_3 > time_to_start_playing_2, error::internal(E_TEST_FAILURE));
     }
 
     #[test(core_resources = @CoreResources, account1 = @0x123, account2 = @0x456)]
-    public(script) fun test_vote_public(core_resources: signer, account1: signer, account2: signer) acquires JukeboxV15 {
-        Timestamp::set_time_has_started_for_testing(&core_resources);
+    public entry fun test_vote_public(core_resources: signer, account1: signer, account2: signer) acquires Jukebox {
+        timestamp::set_time_has_started_for_testing(&core_resources);
 
         // Account 1 is where we initialize the jukebox.
         // Account 2 is a participating voter.
-        let addr1 = Signer::address_of(&account1);
+        let addr1 = signer::address_of(&account1);
 
         // Initialize a jukebox on account1.
         initialize_jukebox(&account1);
-        assert!(exists<JukeboxV15>(addr1), Errors::internal(E_TEST_FAILURE));
+        assert!(exists<Jukebox>(addr1), error::internal(E_TEST_FAILURE));
 
         // Submit a vote.
         let vote = b"abc1234";
