@@ -199,9 +199,9 @@ module jukebox::jukebox {
         iterable_table::borrow_mut<K, V>(table, key)
     }
 
-    #[test(core_resources = @CoreResources, account1 = @0x123, account2 = @0x456)]
-    public entry fun test_initialize(core_resources: signer, account1: signer, account2: signer) acquires Jukebox {
-        timestamp::set_time_has_started_for_testing(&core_resources);
+    #[test(aptos_framework = @aptos_framework, account1 = @0x123, account2 = @0x456)]
+    public entry fun test_initialize(aptos_framework: signer, account1: signer, account2: signer) acquires Jukebox {
+        timestamp::set_time_has_started_for_testing(&aptos_framework);
 
         // Account 1 is where we initialize the jukebox.
         // Account 2 is a participating voter.
@@ -220,9 +220,9 @@ module jukebox::jukebox {
         );
     }
 
-    #[test(core_resources = @CoreResources, account1 = @0x123, account2 = @0x456)]
-    public entry fun test_vote(core_resources: signer, account1: signer, account2: signer) acquires Jukebox {
-        timestamp::set_time_has_started_for_testing(&core_resources);
+    #[test(aptos_framework = @aptos_framework, account1 = @0x123, account2 = @0x456)]
+    public entry fun test_vote(aptos_framework: signer, account1: signer, account2: signer) acquires Jukebox {
+        timestamp::set_time_has_started_for_testing(&aptos_framework);
 
         // Account 1 is where we initialize the jukebox.
         // Account 2 is a participating voter.
@@ -248,9 +248,9 @@ module jukebox::jukebox {
         assert!(iterable_table::borrow(votes, addr2) == &vote2, error::internal(E_TEST_FAILURE));
     }
 
-    #[test(core_resources = @CoreResources, account1 = @0x123, account2 = @0x456)]
-    public entry fun test_resolve_votes(core_resources: signer, account1: signer, account2: signer) acquires Jukebox {
-        timestamp::set_time_has_started_for_testing(&core_resources);
+    #[test(aptos_framework = @aptos_framework, account1 = @0x123, account2 = @0x456)]
+    public entry fun test_resolve_votes(aptos_framework: signer, account1: signer, account2: signer) acquires Jukebox {
+        timestamp::set_time_has_started_for_testing(&aptos_framework);
 
         // Account 1 is where we initialize the jukebox.
         // Account 2 is a participating voter.
@@ -302,9 +302,9 @@ module jukebox::jukebox {
         assert!(time_to_start_playing_3 > time_to_start_playing_2, error::internal(E_TEST_FAILURE));
     }
 
-    #[test(core_resources = @CoreResources, account1 = @0x123, account2 = @0x456)]
-    public entry fun test_vote_public(core_resources: signer, account1: signer, account2: signer) acquires Jukebox {
-        timestamp::set_time_has_started_for_testing(&core_resources);
+    #[test(aptos_framework = @aptos_framework, account1 = @0x123, account2 = @0x456)]
+    public entry fun test_vote_public(aptos_framework: signer, account1: signer, account2: signer) acquires Jukebox {
+        timestamp::set_time_has_started_for_testing(&aptos_framework);
 
         // Account 1 is where we initialize the jukebox.
         // Account 2 is a participating voter.

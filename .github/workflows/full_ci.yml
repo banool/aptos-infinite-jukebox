@@ -11,7 +11,7 @@ jobs:
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       driver: ${{ steps.filter.outputs.driver }}
-      move_module: ${{ steps.filter.outputs.move_module }}
+      move: ${{ steps.filter.outputs.move }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -20,37 +20,17 @@ jobs:
       with:
         filters: '.github/filters.yml'
     - name: Print changes
-      run: printf "Frontend changed $FRONTEND\nDriver changed $DRIVER\nMove module changed $MOVE_MODULE\n"
+      run: printf "Frontend changed $FRONTEND\nDriver changed $DRIVER\nMove module changed $MOVE\n"
       env:
         FRONTEND: ${{ steps.filter.outputs.frontend }}
         DRIVER: ${{ steps.filter.outputs.driver }}
-        MOVE_MODULE: ${{ steps.filter.outputs.move_module }}
-
-
-  # Run the frontend tests.
-  test_frontend:
-    needs: [changes]
-    if: needs.changes.outputs.frontend == 'true'
-    defaults:
-      run:
-        working-directory: ./aptos_infinite_jukebox
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: subosito/flutter-action@v1
-      with:
-        flutter-version: '3.0.1'
-        channel: stable
-    - uses: actions/checkout@v3
-    # Initial build and test
-    - run: flutter pub get
-    # Run tests
-    - run: flutter test
+        MOVE: ${{ steps.filter.outputs.move }}
 
 
   # Test and publish the Move module.
   publish_move_module:
-    if: needs.tests.outputs.move_module == 'true'
+    needs: [changes]
+    if: needs.changes.outputs.move == 'true'
     defaults:
       run:
         working-directory: ./move
@@ -59,9 +39,9 @@ jobs:
     - uses: actions/checkout@v3
     - run: wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v1.0.1/aptos-cli-1.0.1-Ubuntu-x86_64.zip -O cli.zip
     - run: unzip cli.zip
-    - run: yes "" | ./aptos init --assume-yes --private-key ${{ secrets.APTOS_ACCOUNT_PRIVATE_KEY }}
+    - run: yes "" | ./aptos init --assume-yes --network testnet --private-key ${{ secrets.APTOS_ACCOUNT_PRIVATE_KEY }}
     - run: ./aptos move test
-    - run: ./aptos move publish
+    - run: yes "yes" | ./aptos move publish
 
 
   # Build web and upload the artifact.
@@ -72,7 +52,7 @@ jobs:
     concurrency: ci-${{ github.ref }}
     defaults:
       run:
-        working-directory: ./aptos_infinite_jukebox
+        working-directory: ./frontend
     steps:
     - uses: actions/checkout@v3
     - uses: subosito/flutter-action@v1

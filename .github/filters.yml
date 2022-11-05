@@ -7,13 +7,13 @@ ci: &ci
 
 frontend:
   - *force
-  - 'aptos_infinite_jukebox/lib/**'
+  - 'frontend/lib/**'
   - 'site/**'
 
 driver:
   - *force
   - 'driver/**'
 
-move_module:
+move:
   - *force
-  - 'move_module/**'
+  - 'move/**'

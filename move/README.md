@@ -1,8 +1,7 @@
 # Move Module
-
-## Setting up the aptos CLI
 All steps are relative to this directory.
 
+## Setting up the aptos CLI
 ```
 aptos config init
 ```
