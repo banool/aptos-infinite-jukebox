@@ -239,15 +239,13 @@ Future<bool> showChangeStringSharedPrefDialog(
   TextField textField = TextField(
     controller: textController,
   );
-  // ignore: deprecated_member_use
-  Widget cancelButton = FlatButton(
+  Widget cancelButton = ElevatedButton(
     child: Text(cancelText),
     onPressed: () {
       Navigator.of(context).pop();
     },
   );
-  // ignore: deprecated_member_use
-  Widget continueButton = FlatButton(
+  Widget continueButton = ElevatedButton(
     child: Text(confirmText),
     onPressed: () async {
       String newValue = textController.text;

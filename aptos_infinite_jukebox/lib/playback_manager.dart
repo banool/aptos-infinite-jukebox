@@ -92,7 +92,7 @@ class PlaybackManager extends ChangeNotifier {
     // Get the information from the account.
     Dio dio = Dio(BaseOptions(baseUrl: aptosNodeUrl));
     AptosClientHelper aptosClientHelper = AptosClientHelper.fromDio(dio);
-    AccountResource resource;
+    MoveResource resource;
     try {
       resource = await unwrapClientCall(aptosClientHelper.client
           .getAccountsApi()

@@ -167,7 +167,7 @@ class MakeVotePageState extends State<MakeVotePage> {
   }
 
   // Returns true if the transaction was committed.
-  Future<TransactionResult> executeTransaction() async {
+  Future<FullTransactionResult> executeTransaction() async {
     setState(() {
       submittingVoteInformation = "Preparing to build transaction...";
     });
@@ -194,69 +194,12 @@ class MakeVotePageState extends State<MakeVotePage> {
       submittingVoteInformation = "Building transaction payload...";
     });
 
-    // Build a script function payload that transfers coin.
-    ScriptFunctionPayloadBuilder scriptFunctionPayloadBuilder =
-        ScriptFunctionPayloadBuilder()
-          ..type = "script_function_payload"
-          ..function_ = func
-          // This is the type for an ascii string under the hood.
-          ..typeArguments = ListBuilder([])
-          // ..typeArguments = ListBuilder(["address", "vector<u8>"])
-          ..arguments = ListBuilder([
-            StringJsonObject(jukeboxAddress.noPrefix()),
-            StringJsonObject(HexString.fromRegularString(trackId).noPrefix())
-          ]);
-
-    // Build that into a transaction payload.
-    TransactionPayloadBuilder transactionPayloadBuilder =
-        TransactionPayloadBuilder()
-          ..oneOf = OneOf1(value: scriptFunctionPayloadBuilder.build());
-
-    // Build a transasction request. This includes a call to determine the
-    // current sequence number so we can build that transasction.
-    $UserTransactionRequestBuilder userTransactionBuilder =
-        await aptosClientHelper.generateTransaction(
-            aptosAccount!.address, transactionPayloadBuilder);
-
-    // Convert the transaction into the appropriate format and then sign it.
-    SubmitTransactionRequestBuilder submitTransactionRequestBuilder =
-        await aptosClientHelper.signTransaction(
-            aptosAccount!, userTransactionBuilder);
-
-    bool committed = false;
-    String? errorString;
-
-    // Finally submit the transaction.
-    try {
-      setState(() {
-        submittingVoteInformation = "Submitting transaction...";
-      });
-
-      PendingTransaction pendingTransaction = await unwrapClientCall(
-          aptosClientHelper.client.getTransactionsApi().submitTransaction(
-              submitTransactionRequest:
-                  submitTransactionRequestBuilder.build()));
-
-      setState(() {
-        submittingVoteInformation =
-            "Waiting for transaction to be committed...";
-      });
-
-      // Wait for the transaction to be committed.
-      PendingTransactionResult pendingTransactionResult =
-          await aptosClientHelper.waitForTransaction(pendingTransaction.hash);
-
-      committed = pendingTransactionResult.committed;
-      errorString = getErrorString(pendingTransactionResult.error);
-    } on DioError catch (e) {
-      errorString =
-          "Type: ${e.type}\nMessage: ${e.message}\nResponse: ${e.response}\nError: ${e.error}";
-    } catch (e) {
-      errorString = "$e";
-    }
-
-    return TransactionResult(
-        committed, userTransactionBuilder.build(), errorString);
+    return await aptosClientHelper.buildSignSubmitWait(
+        AptosClientHelper.buildPayload(func, [], [
+          StringJsonObject(jukeboxAddress.noPrefix()),
+          StringJsonObject(HexString.fromRegularString(trackId).noPrefix())
+        ]),
+        aptosAccount!);
   }
 
   // When doing this, darken the page and display a circular loading indicator
@@ -264,22 +207,8 @@ class MakeVotePageState extends State<MakeVotePage> {
   // This should return some object either explaining success or failure.
   // We should then pushReplacement a new page showing what happened.
   Future<void> submitVote() async {
-    // todo submit the transaction, wait for it.
     // Push the results page. When we come back here, pop immediately.
-
-    TransactionResult transactionResult;
-
-    try {
-      transactionResult = await executeTransaction();
-    } on DioError catch (e) {
-      transactionResult = TransactionResult(false, null,
-          "Type: ${e.type}\nMessage: ${e.message}\nResponse: ${e.response}\nError: ${e.error}");
-    } catch (e) {
-      transactionResult = TransactionResult(false, null, "$e");
-      rethrow;
-    }
-
-    print(transactionResult);
+    FullTransactionResult transactionResult = await executeTransaction();
 
     setState(() {
       submittingVoteInformation = null;

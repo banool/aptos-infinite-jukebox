@@ -75,7 +75,7 @@ class VotingPageState extends State<VotingPage> {
       tableHandle = tableHandleRaw;
     } else {
       // Pull resources.
-      AccountResource resource;
+      MoveResource resource;
       try {
         resource = await unwrapClientCall(aptosClientHelper.client
             .getAccountsApi()
@@ -103,10 +103,10 @@ class VotingPageState extends State<VotingPage> {
           ..keyType = "address"
           ..valueType = buildResourceType())
         .build();
-    JsonObject obj;
+    MoveValue value;
     try {
-      obj = await unwrapClientCall(aptosClientHelper.client
-          .getTableApi()
+      value = await unwrapClientCall(aptosClientHelper.client
+          .getTablesApi()
           .getTableItem(
               tableHandle: tableHandle, tableItemRequest: tableItemRequest));
     } catch (e) {
@@ -115,7 +115,7 @@ class VotingPageState extends State<VotingPage> {
     }
 
     setState(() {
-      myVote = obj.asMap["song"]["song"];
+      myVote = (value.anyOf as JsonObject).asMap["song"]["song"];
     });
   }
 

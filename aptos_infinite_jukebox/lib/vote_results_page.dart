@@ -3,22 +3,9 @@ import 'package:flutter/material.dart';
 
 import 'page_selector.dart';
 
-class TransactionResult {
-  bool success;
-  $UserTransactionRequest? transaction;
-  String? errorString;
-
-  TransactionResult(this.success, this.transaction, this.errorString);
-
-  @override
-  String toString() {
-    return "Success: $success, Transaction: $transaction, Error: $errorString";
-  }
-}
-
 class VoteResultsPage extends StatelessWidget {
   final PageSelectorController pageSelectorController;
-  final TransactionResult transactionResult;
+  final FullTransactionResult transactionResult;
 
   const VoteResultsPage(this.pageSelectorController, this.transactionResult,
       {Key? key})
@@ -27,7 +14,7 @@ class VoteResultsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String resultsHeaderString =
-        transactionResult.success ? "🤠  Success  🤠" : "😢  Error  😢";
+        transactionResult.committed ? "🤠  Success  🤠" : "😢  Error  😢";
     List<Widget> textBodyChildren = [];
     if (transactionResult.transaction != null) {
       textBodyChildren += [

@@ -15,11 +15,13 @@ void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     PackageInfo.setMockInitialValues(
-        appName: "myapp",
-        packageName: "mypackage",
-        version: "1.1.1",
-        buildNumber: "555",
-        buildSignature: "whatever");
+      appName: "myapp",
+      packageName: "mypackage",
+      version: "1.1.1",
+      buildNumber: "555",
+      buildSignature: "whatever",
+      installerStore: "installer",
+    );
     await setup();
     await tester.pumpWidget(const MyApp());
   });

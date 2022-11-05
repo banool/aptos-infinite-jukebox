@@ -21,12 +21,12 @@ const String keyPrivateKey = "keyPrivateKey";
 const String keyVotesTableHandle = "keyVotesTableHandle";
 
 // Shared preferences defaults.
-const String defaultAptosNodeUrl = "https://fullnode.devnet.aptoslabs.com";
+const String defaultAptosNodeUrl = "https://fullnode.testnet.aptoslabs.com";
 const String defaultJukeboxAddress =
-    "c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd";
+    "b078d693856a65401d492f99ca0d6a29a0c5c0e371bc2521570a86e40d95f823";
 const String defaultModuleAddress =
-    "c40f1c9b9fdc204cf77f68c9bb7029b0abbe8ad9e5561f7794964076a4fbdcfd";
-const String defaultModuleName = "JukeboxV15";
+    "b078d693856a65401d492f99ca0d6a29a0c5c0e371bc2521570a86e40d95f823";
+const String defaultModuleName = "Jukebox";
 const String? defaultPrivateKey = null;
 
 const Duration spotifyActionDelay = Duration(milliseconds: 500);
