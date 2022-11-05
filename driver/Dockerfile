@@ -1,5 +1,5 @@
 # Start with a Rust alpine image.
-FROM rust:1.60 as build
+FROM rust:1.64.0 as build
 
 # Copy in the code.
 WORKDIR /build

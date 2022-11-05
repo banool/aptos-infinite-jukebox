@@ -9,7 +9,7 @@ use aptos_sdk::transaction_builder::TransactionFactory;
 use aptos_sdk::types::LocalAccount;
 use aptos_sdk::types::{
     chain_id::ChainId,
-    transaction::{authenticator::AuthenticationKey, ScriptFunction, TransactionPayload},
+    transaction::{authenticator::AuthenticationKey, EntryFunction, TransactionPayload},
 };
 use clap::Parser;
 use log::info;
@@ -23,13 +23,16 @@ pub struct AptosArgs {
     pub account_private_key: String,
 
     /// What Aptos node to talk to.
-    #[clap(long, default_value = "https://fullnode.devnet.aptoslabs.com")]
+    #[clap(long, default_value = "https://fullnode.testnet.aptoslabs.com")]
     pub node_url: Url,
 
-    /// The module name. We assume the module name and top level struct
-    /// name are identical, as is the convention.
-    #[clap(long, default_value = "JukeboxV15")]
+    /// The module name.
+    #[clap(long, default_value = "jukebox")]
     pub module_name: String,
+
+    /// The struct name inside the module.
+    #[clap(long, default_value = "Jukebox")]
+    pub struct_name: String,
 
     /// Aptos address where the module is published. If not given, we
     /// assume the module is published at the address of the given
@@ -63,13 +66,14 @@ pub async fn get_current_song_info(
     account_public_address: AccountAddress,
     module_address: &AccountAddress,
     module_name: &String,
+    struct_name: &String,
 ) -> Result<CurrentSongInfo> {
     let client = AptosClient::new(node_url);
     let resource_type = format!(
         "0x{}::{}::{}",
         module_address.to_hex(),
         module_name,
-        module_name
+        struct_name
     );
     let resource = client
         .get_account_resource(account_public_address, &resource_type)
@@ -131,9 +135,9 @@ pub async fn trigger_vote_resolution(
     let module_id = ModuleId::new(module_address.clone(), module_name);
     let function =
         Identifier::new("resolve_votes").context("Failed to make function identifier")?;
-    let script_function = ScriptFunction::new(module_id, function, vec![], vec![]);
-    let payload = TransactionPayload::ScriptFunction(script_function);
-    let transaction = submit_transaction(url, chain_id, private_key, payload, 50000).await?;
+    let entry_function = EntryFunction::new(module_id, function, vec![], vec![]);
+    let payload = TransactionPayload::EntryFunction(entry_function);
+    let transaction = submit_transaction(url, chain_id, private_key, payload, 500000).await?;
     info!(
         "Submitted transaction: {:?}",
         transaction.transaction_info()
@@ -171,7 +175,7 @@ async fn submit_transaction(
 
     // Sign and submit transaction
     let transaction_factory = TransactionFactory::new(chain_id)
-        .with_gas_unit_price(1)
+        .with_gas_unit_price(200)
         .with_max_gas_amount(max_gas);
     let sender_account = &mut LocalAccount::new(sender_address, sender_key, sequence_number);
     let transaction =

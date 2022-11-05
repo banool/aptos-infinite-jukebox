@@ -145,6 +145,7 @@ async fn main() -> Result<()> {
         account_address.clone(),
         &module_address,
         &args.aptos_args.module_name,
+        &args.aptos_args.struct_name,
     )
     .await
     .context("Failed to determine current song info")?;

@@ -25,7 +25,7 @@ jobs:
         FRONTEND: ${{ steps.filter.outputs.frontend }}
         DRIVER: ${{ steps.filter.outputs.driver }}
         MOVE_MODULE: ${{ steps.filter.outputs.move_module }}
-  
+
 
   # Run the frontend tests.
   test_frontend:
@@ -46,141 +46,68 @@ jobs:
     - run: flutter pub get
     # Run tests
     - run: flutter test
-  
 
-  # Run the move module tests.
-  test_move_module:
-    needs: [changes]
-    if: needs.changes.outputs.move_module == 'true'
-    defaults:
-      run:
-        working-directory: ./move_module
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - run: wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v0.1.1/aptos-cli-0.1.1-Ubuntu-x86_64.zip -O cli.zip
-    - run: unzip cli.zip
-    - run: ./aptos move test
-  
 
-  # Publish the move module.
+  # Test and publish the Move module.
   publish_move_module:
-    needs: [test_move_module]
     if: needs.tests.outputs.move_module == 'true'
     defaults:
       run:
-        working-directory: ./move_module
+        working-directory: ./move
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - run: wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v0.1.1/aptos-cli-0.1.1-Ubuntu-x86_64.zip -O cli.zip
+    - run: wget https://github.com/aptos-labs/aptos-core/releases/download/aptos-cli-v1.0.1/aptos-cli-1.0.1-Ubuntu-x86_64.zip -O cli.zip
     - run: unzip cli.zip
     - run: yes "" | ./aptos init --assume-yes --private-key ${{ secrets.APTOS_ACCOUNT_PRIVATE_KEY }}
+    - run: ./aptos move test
     - run: ./aptos move publish
-    - run: wget https://github.com/mikefarah/yq/releases/download/v4.25.1/yq_linux_amd64.tar.gz -O - | tar xz && mv yq_linux_amd64 /usr/bin/yq
-    - run: ./aptos move run --function-id "$(yq .profiles.default.account < .aptos/config.yaml)::$(cat move_module/sources/AptosInfiniteJukebox.move | grep -o -E 'JukeboxV\d+' | head -n 1)::initialize_jukebox" --max-gas 10000
 
 
-  # Update the base infrastructure, e.g. just setting up certain components
-  # once and once only, such as an Artifact Registry repo.
-  update_base_infrastructure:
-    defaults:
-      run:
-        working-directory: ./deployment/base
+  # Build web and upload the artifact.
+  build_web:
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 18.x
-    # TODO: Use WIF when gsutil supports it: https://github.com/GoogleCloudPlatform/gsutil/issues/1407
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v0'
-      with:
-        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
-    - name: 'Set up Cloud SDK'
-      uses: 'google-github-actions/setup-gcloud@v0'
-    - run: npm install
-    - uses: pulumi/actions@v3
-      with:
-        command: up
-        stack-name: prod
-        work-dir: ./deployment/base
-      env:
-        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-        GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
-        GOOGLE_REGION: ${{ secrets.GCP_REGION }}
-
-
-  # Update the web infrastructure if necessary. We always run this action so
-  # we have the outputs for later steps. 
-  update_web_infrastructure:
-    defaults:
-      run:
-        working-directory: ./deployment/web
-    needs: [update_base_infrastructure]
-    outputs:
-      bucketUrl: ${{ steps.pulumi.outputs.bucketUrl }}
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 18.x
-    # TODO: Use WIF when gsutil supports it:
-    # https://github.com/GoogleCloudPlatform/gsutil/issues/1407
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v0'
-      with:
-        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
-    - name: 'Set up Cloud SDK'
-      uses: 'google-github-actions/setup-gcloud@v0'
-    - run: npm install
-    - uses: pulumi/actions@v3
-      id: pulumi
-      with:
-        command: up
-        stack-name: prod
-        work-dir: ./deployment/web
-      env:
-        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-        GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
-        GOOGLE_REGION: ${{ secrets.GCP_REGION }}
-
-
-  # Build web and push it.
-  push_web:
+    needs: [changes]
+    if: needs.changes.outputs.frontend == 'true'
+    concurrency: ci-${{ github.ref }}
     defaults:
       run:
         working-directory: ./aptos_infinite_jukebox
-    needs: [test_frontend, update_web_infrastructure]
-    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v0'
-      with:
-        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
-    - name: 'Set up Cloud SDK'
-      uses: 'google-github-actions/setup-gcloud@v0'
     - uses: subosito/flutter-action@v1
       with:
-        flutter-version: '3.0.1'
+        flutter-version: '3.3.5'
         channel: stable
-
-    # Initial build and test
+    # Test and build
     - run: flutter pub get
-
-    # Build the web frontend
+    - run: flutter test
     - run: flutter build web
-
     # Copy in the the Spotify auth callback handler file
     - run: cp ../site/auth_callback.html build/web
 
-    # Copy the files into the GCP bucket.
-    - run: echo "${{ needs.update_web_infrastructure.outputs.bucketUrl }}"
-    - run: gsutil rsync -R build/web/ "${{ needs.update_web_infrastructure.outputs.bucketUrl }}"
-  
+    # Upload the artifact.
+    - uses: actions/upload-pages-artifact@v1
+      with:
+        path: frontend/build/web
+
+
+  # Deploy web using the artifact from the previous job.
+  deploy_web:
+    runs-on: ubuntu-latest
+    needs: [build_web]
+    concurrency: ci-${{ github.ref }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - uses: actions/configure-pages@v1
+    - id: deployment
+      uses: actions/deploy-pages@v1
+
 
   # Build the driver, push it to GHCR.
   build_driver:
@@ -208,46 +135,3 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-
-  # Update the driver infrastructure if necessary. We don't need to set
-  # application specific secrets here, those are held in the stack within
-  # the directory. The secrets values there are just references to the
-  # secret actually held in the secrets management service. This isn't
-  # ideal since I have my secrets split across 3 different places in a
-  # way (the secrets repo, GitHub Actions, and Pulumi), clean that up.
-  update_driver_infrastructure:
-    defaults:
-      run:
-        working-directory: ./deployment/driver
-    needs: [build_driver, update_base_infrastructure]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 18.x
-    # TODO: Use WIF when gsutil supports it: https://github.com/GoogleCloudPlatform/gsutil/issues/1407
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v0'
-      with:
-        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
-    - name: 'Set up Cloud SDK'
-      uses: 'google-github-actions/setup-gcloud@v0'
-    - run: npm install
-    - uses: pulumi/actions@v3
-      id: pulumi  
-      with:
-        command: up
-        stack-name: prod
-        work-dir: ./deployment/driver
-      env:
-        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-        GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
-        GOOGLE_REGION: ${{ secrets.GCP_REGION }}
-    # Restart the instance running the driver. Currently this job only runs
-    # when the driver is built, which isn't really ideal, it should wait for
-    # the driver build if it happens, but if not, it should just run anyway.
-    # With that in mind, we should only restart the instance when we know
-    # build driver ran succesfully. TODO.
-    - run: gcloud compute instances stop ${{ steps.pulumi.outputs.driverInstanceId }}
-    - run: gcloud compute instances start ${{ steps.pulumi.outputs.driverInstanceId }}
