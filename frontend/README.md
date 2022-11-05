@@ -6,10 +6,11 @@ This is done automatically via Github Actions.
 ## Deploying to iOS
 Currently this must be done manually:
 ```
+cd ios
 flutter pub get
 flutter pub run icons_launcher:create
 flutter build ios --release --no-codesign
-cd ios && ./publish.sh
+./publish.sh
 ```
 
 If you run into problems with this, run some combination of these commands:

@@ -115,3 +115,69 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+
+
+  # Build, test, sign, publish Android build.
+  build_android:
+    needs: [changes]
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+    - uses: actions/checkout@v3
+
+    - run: echo "${{ secrets.UPLOAD_KEYSTORE }}" | base64 -d > android/upload_keystore.jks
+    - run: echo "${{ secrets.KEY_PROPERTIES }}" | base64 -d > android/key.properties
+
+    - run: sudo apt update
+    - run: sudo apt upgrade -y
+    - run: sudo apt install curl wget clang cmake ninja-build libgtk-3-dev pkg-config libssl-dev build-essential
+
+    - uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install Rust stable
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: stable
+          override: true
+
+    - run: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+
+    - uses: nttld/setup-ndk@v1
+      id: setupndk
+      with:
+        ndk-version: r24
+        add-to-path: false
+
+    - run: native/fix_ndk_gcc.sh
+      env:
+        ANDROID_NDK_HOME: ${{ steps.setupndk.outputs.ndk-path }}
+
+    - run: cargo install cargo-ndk
+
+    - uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.3.0'
+        channel: stable
+
+    - run: flutter pub get
+
+    - run: flutter test
+    # This will produce a signed appbundle.
+    - run: flutter build appbundle
+      env:
+        ANDROID_NDK_HOME: ${{ steps.setupndk.outputs.ndk-path }}
+
+    # Publish release
+    - name: Publish Android build to internal track
+      uses: r0adkll/upload-google-play@v1.0.15
+      with:
+        serviceAccountJsonPlainText: ${{ secrets.ANDROID_SERVICE_ACCOUNT_JSON }}
+        packageName: com.banool.aclip
+        releaseFile: frontend/build/app/outputs/bundle/release/app-release.aab
+        track: internal
