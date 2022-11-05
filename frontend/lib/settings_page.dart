@@ -1,5 +1,4 @@
 import 'package:aptos_infinite_jukebox/troubleshooting_help_page.dart';
-import 'package:aptos_sdk_dart/aptos_sdk_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -85,6 +84,19 @@ class SettingsPageState extends State<SettingsPage> {
               onPressed: (BuildContext context) async {
                 bool confirmed = await showChangeStringSharedPrefDialog(
                     context, "Module name", keyModuleName, defaultModuleName);
+                if (confirmed) {
+                  await clearCachedTableHandle();
+                  setState(() {});
+                }
+              }),
+          SettingsTile.navigation(
+              title: getText(
+                "Struct name",
+              ),
+              trailing: Container(),
+              onPressed: (BuildContext context) async {
+                bool confirmed = await showChangeStringSharedPrefDialog(
+                    context, "Struct name", keyStructName, defaultStructName);
                 if (confirmed) {
                   await clearCachedTableHandle();
                   setState(() {});

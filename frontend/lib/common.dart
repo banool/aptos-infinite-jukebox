@@ -27,6 +27,9 @@ String buildResourceType({String? structName}) {
       sharedPreferences.getString(keyModuleAddress) ?? defaultModuleAddress;
   String moduleName =
       sharedPreferences.getString(keyModuleName) ?? defaultModuleName;
+  structName = structName ??
+      sharedPreferences.getString(keyStructName) ??
+      defaultStructName;
 
-  return "0x$moduleAddress::$moduleName::${structName ?? moduleName}";
+  return "0x$moduleAddress::$moduleName::$structName";
 }

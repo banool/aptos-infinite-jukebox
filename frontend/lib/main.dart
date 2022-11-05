@@ -15,8 +15,7 @@ Future<void> setup() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   onWeb = false;
-  spotifyRedirectUrl =
-      "https://aptos-infinite-jukebox.dport.me/auth_callback.html";
+  spotifyRedirectUrl = "https://dport.stream/auth_callback.html";
   if (defaultTargetPlatform == TargetPlatform.iOS ||
       defaultTargetPlatform == TargetPlatform.android) {
     if (defaultTargetPlatform == TargetPlatform.iOS) {

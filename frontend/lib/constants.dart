@@ -17,6 +17,7 @@ const String keyAptosNodeUrl = "keyAptosNodeUrl";
 const String keyJukeboxAddress = "keyJukeboxAddress";
 const String keyModuleAddress = "keyModuleAddress";
 const String keyModuleName = "keyModuleName";
+const String keyStructName = "keyStructName";
 const String keyPrivateKey = "keyPrivateKey";
 const String keyVotesTableHandle = "keyVotesTableHandle";
 
@@ -26,7 +27,8 @@ const String defaultJukeboxAddress =
     "b078d693856a65401d492f99ca0d6a29a0c5c0e371bc2521570a86e40d95f823";
 const String defaultModuleAddress =
     "b078d693856a65401d492f99ca0d6a29a0c5c0e371bc2521570a86e40d95f823";
-const String defaultModuleName = "Jukebox";
+const String defaultModuleName = "jukebox";
+const String defaultStructName = "Jukebox";
 const String? defaultPrivateKey = null;
 
 const Duration spotifyActionDelay = Duration(milliseconds: 500);
